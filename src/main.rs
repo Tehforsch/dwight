@@ -1,13 +1,18 @@
+#![feature(const_fn_floating_point_arithmetic)]
 //! Blinks the LED on a Pico board
 //!
 //! This will blink an LED attached to GP25, which is the pin the Pico uses for the on-board LED.
 #![no_std]
 #![no_main]
 
-use bsp::entry;
-use defmt::*;
+mod tone;
+
+use bsp::{
+    entry,
+    hal::pwm::{InputHighRunning, Slices},
+};
 use defmt_rtt as _;
-use embedded_hal::digital::v2::OutputPin;
+use embedded_hal::{digital::v2::OutputPin, PwmPin};
 use panic_probe as _;
 
 // Provide an alias for our BSP so we can switch targets quickly.
@@ -21,10 +26,10 @@ use bsp::hal::{
     sio::Sio,
     watchdog::Watchdog,
 };
+use tone::*;
 
 #[entry]
 fn main() -> ! {
-    info!("Program start");
     let mut pac = pac::Peripherals::take().unwrap();
     let core = pac::CorePeripherals::take().unwrap();
     let mut watchdog = Watchdog::new(pac.WATCHDOG);
@@ -60,14 +65,37 @@ fn main() -> ! {
     // LED to one of the GPIO pins, and reference that pin here.
     let mut led_pin = pins.led.into_push_pull_output();
 
+    // Init PWMs
+    let pwm_slices = Slices::new(pac.PWM, &mut pac.RESETS);
+
+    // Configure PWM4
+    let mut pwm = pwm_slices.pwm0;
+    pwm.set_ph_correct();
+    pwm.enable();
+
+    // Set to run when b channel is high
+    let mut pwm = pwm.into_mode::<InputHighRunning>();
+    pwm.channel_b.input_from(pins.gpio1);
+
+    let twinkle_twinkle = [
+        C4, C4, G4, G4, A4, A4, G4, NO_NOTE, F4, F4, E4, E4, D4, D4, C4, NO_NOTE, G4, G4, F4, F4,
+        E4, E4, D4, NO_NOTE, G4, G4, F4, F4, E4, E4, D4, NO_NOTE, C4, C4, G4, G4, A4, A4, G4,
+        NO_NOTE, F4, F4, E4, E4, D4, D4, C4, NO_NOTE,
+    ];
+
+    for top in twinkle_twinkle {
+        pwm.channel_b.set_duty(top / 2); // 50% Duty Cycle
+        pwm.set_top(top);
+        delay.delay_ms(500);
+
+        pwm.channel_b.set_duty(0);
+        delay.delay_ms(500);
+    }
+
     loop {
-        info!("on!");
         led_pin.set_high().unwrap();
         delay.delay_ms(500);
-        info!("off!");
         led_pin.set_low().unwrap();
         delay.delay_ms(500);
     }
 }
-
-// End of file
