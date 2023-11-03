@@ -99,7 +99,7 @@ impl Machine for Dwight {
         }
     }
 
-    fn set_led_state(&mut self, led: &Led, led_state: &LedState) {
+    fn set_led_state(&mut self, led: Led, led_state: LedState) {
         match (led_state, led) {
             (LedState::On, Led::Left) => self.pins.left_led.set_high(),
             (LedState::On, Led::Right) => self.pins.right_led.set_high(),
@@ -109,7 +109,7 @@ impl Machine for Dwight {
         .unwrap();
     }
 
-    fn set_relay_state(&mut self, relay_state: &RelayState) {
+    fn set_relay_state(&mut self, relay_state: RelayState) {
         match relay_state {
             RelayState::On => self.pins.relay_pin.set_high(),
             RelayState::Off => self.pins.relay_pin.set_low(),

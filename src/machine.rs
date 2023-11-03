@@ -35,12 +35,14 @@ impl Frequency {
     pub const BREAK: Frequency = Frequency::Silence;
 }
 
+#[derive(Debug, PartialEq)]
 pub enum Switch {
     Number(usize),
     Left,
     Right,
 }
 
+#[derive(Debug)]
 pub enum SwitchState {
     Pressed,
     Released,
@@ -48,8 +50,8 @@ pub enum SwitchState {
 
 pub trait Machine {
     fn get_switch_state(&mut self, switch: Switch) -> SwitchState;
-    fn set_led_state(&mut self, led: &Led, led_state: &LedState);
-    fn set_relay_state(&mut self, relay_state: &RelayState);
+    fn set_led_state(&mut self, led: Led, led_state: LedState);
+    fn set_relay_state(&mut self, relay_state: RelayState);
     fn play_frequency(&mut self, frequency: &Frequency);
     fn wait(&mut self, delay_ms: f32);
 
@@ -60,5 +62,16 @@ pub trait Machine {
         self.wait(total_delay - break_after_note);
         self.play_frequency(&Frequency::Silence);
         self.wait(break_after_note);
+    }
+
+    fn is_pressed(&mut self, switch: Switch) -> bool {
+        match self.get_switch_state(switch) {
+            SwitchState::Pressed => true,
+            SwitchState::Released => false,
+        }
+    }
+
+    fn is_released(&mut self, switch: Switch) -> bool {
+        !self.is_pressed(switch)
     }
 }
