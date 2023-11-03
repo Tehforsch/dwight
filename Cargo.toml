@@ -61,3 +61,12 @@ debug-assertions = false
 incremental = false
 lto = 'fat'
 opt-level = 3
+
+[[bin]]
+name = "test_machine"
+path = "src/test_machine.rs"
+
+
+[[bin]]
+name = "real_machine"
+path = "src/real_machine.rs"

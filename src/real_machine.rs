@@ -2,7 +2,6 @@
 #![no_main]
 
 mod dwight_pins;
-mod melody;
 
 use dwight_pins::DwightPins;
 use embedded_hal::digital::v2::InputPin;
@@ -21,7 +20,7 @@ use bsp::hal::{
     sio::Sio,
     watchdog::Watchdog,
 };
-use melody::*;
+use dwight::melody::*;
 
 #[entry]
 fn main() -> ! {
