@@ -5,9 +5,7 @@ mod dwight_pins;
 mod melody;
 
 use dwight_pins::DwightPins;
-use embedded_hal::{
-    digital::v2::{InputPin},
-};
+use embedded_hal::digital::v2::{InputPin};
 use rp_pico as bsp;
 
 use bsp::{
@@ -67,15 +65,13 @@ fn main() -> ! {
         note.playback(pwm, &mut delay);
     }
 
-    // let mut out_pin = pins.gpio25.into_push_pull_output();
-
     loop {
-        for (num, pin) in pins.iter_number_switches() {
-            if pin.is_low().unwrap() {
-                for _ in 0..(num + 1) {
+        for num in 0..10 {
+            if pins.get_number_switch(num).is_low().unwrap() {
+                for _ in 0..num {
                     Note {
                         freq: Note::A4,
-                        length: Length::Quarter,
+                        length: Length::Eighth,
                     }
                     .playback(pwm, &mut delay);
                 }

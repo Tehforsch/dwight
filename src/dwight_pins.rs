@@ -1,22 +1,33 @@
 use rp_pico as bsp;
 
 use bsp::hal::gpio::{
-    bank0::Gpio1, DynPinId, FunctionNull, FunctionSioInput, Pin, Pins,
-    PullDown, PullUp,
+    bank0::{Gpio0, Gpio1, Gpio12, Gpio13, Gpio14, Gpio15},
+    DynPinId, FunctionNull, FunctionSioInput, FunctionSioOutput, Pin, Pins, PullDown, PullUp,
 };
 
-type NumberSwitch = Pin<DynPinId, FunctionSioInput, PullUp>;
+type NumberSwitchPin = Pin<DynPinId, FunctionSioInput, PullUp>;
+type LeftSwitchPin = Pin<Gpio12, FunctionSioInput, PullUp>;
+type RightSwitchPin = Pin<Gpio13, FunctionSioInput, PullUp>;
+
 type SpeakerPin = Pin<Gpio1, FunctionNull, PullDown>;
+type RelayPin = Pin<Gpio0, FunctionSioOutput, PullDown>;
+type LeftLedPin = Pin<Gpio14, FunctionSioOutput, PullDown>;
+type RightLedPin = Pin<Gpio15, FunctionSioOutput, PullDown>;
 
 pub struct DwightPins {
-    pub speaker_pin: Option<SpeakerPin>,
-    number_switches: [NumberSwitch; 10],
+    number_switches: [NumberSwitchPin; 10],
+    left_switch: LeftSwitchPin,
+    right_switch: RightSwitchPin,
+
+    speaker_pin: Option<SpeakerPin>,
+    relay_pin: RelayPin,
+    pub left_led: LeftLedPin,
+    pub right_led: RightLedPin,
 }
 
 impl DwightPins {
     pub fn new(pins: Pins) -> Self {
         Self {
-            speaker_pin: Some(pins.gpio1),
             number_switches: [
                 // This is the 0 pin, so it comes first
                 pins.gpio11.into_pull_up_input().into_dyn_pin(),
@@ -30,6 +41,12 @@ impl DwightPins {
                 pins.gpio9.into_pull_up_input().into_dyn_pin(),
                 pins.gpio10.into_pull_up_input().into_dyn_pin(),
             ],
+            left_switch: pins.gpio12.into_pull_up_input(),
+            right_switch: pins.gpio13.into_pull_up_input(),
+            speaker_pin: Some(pins.gpio1),
+            relay_pin: pins.gpio0.into_push_pull_output(),
+            left_led: pins.gpio14.into_push_pull_output(),
+            right_led: pins.gpio15.into_push_pull_output(),
         }
     }
 
@@ -37,7 +54,7 @@ impl DwightPins {
         self.speaker_pin.take().unwrap()
     }
 
-    pub fn iter_number_switches(&self) -> impl Iterator<Item = (usize, &NumberSwitch)> {
-        self.number_switches.iter().enumerate()
+    pub fn get_number_switch(&self, num: usize) -> &NumberSwitchPin {
+        &self.number_switches[num]
     }
 }
