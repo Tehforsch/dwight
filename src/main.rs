@@ -1,12 +1,9 @@
-#![feature(const_fn_floating_point_arithmetic)]
-//! Blinks the LED on a Pico board
-//!
-//! This will blink an LED attached to GP25, which is the pin the Pico uses for the on-board LED.
 #![no_std]
 #![no_main]
 
-mod tone;
+mod melody;
 
+use embedded_hal::PwmPin;
 use rp_pico as bsp;
 
 use bsp::{
@@ -14,7 +11,6 @@ use bsp::{
     hal::{self},
 };
 use defmt_rtt as _;
-use embedded_hal::PwmPin;
 use panic_probe as _;
 
 use bsp::hal::{
@@ -23,7 +19,7 @@ use bsp::hal::{
     sio::Sio,
     watchdog::Watchdog,
 };
-use tone::*;
+use melody::*;
 
 #[entry]
 fn main() -> ! {
@@ -61,13 +57,10 @@ fn main() -> ! {
     pwm.channel_b.output_to(pins.gpio1);
     pwm.set_div_int(80);
 
-    let melody = my_favorite_melody();
+    let melody = beethoven_9();
     loop {
         for note in melody.iter() {
             note.playback(pwm, &mut delay);
-
-            pwm.channel_b.set_duty(0);
-            delay.delay_ms(300);
         }
     }
 }
