@@ -18,7 +18,7 @@ pub enum Length {
 
 impl Length {
     pub fn as_ms(&self, bpm: f32) -> f32 {
-        let bps = bpm * 60.0;
+        let bps = bpm / 60.0;
         let factor = match self {
             Length::Half => 2.0,
             Length::Quarter => 1.0,
