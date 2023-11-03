@@ -1,13 +1,17 @@
 use std::{thread, time::Duration};
 
 use dwight::{
-    machine::{Frequency, Led, LedState, Machine, RelayState},
+    machine::{Frequency, Led, LedState, Machine, RelayState, Switch, SwitchState},
     main_loop,
 };
 
 struct TestDwight {}
 
 impl Machine for TestDwight {
+    fn get_switch_state(&mut self, _switch: Switch) -> SwitchState {
+        SwitchState::Pressed
+    }
+
     fn set_led_state(&mut self, led: &Led, led_state: &LedState) {
         dbg!(led, led_state);
     }

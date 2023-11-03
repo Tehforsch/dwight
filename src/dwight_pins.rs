@@ -15,9 +15,9 @@ type LeftLedPin = Pin<Gpio14, FunctionSioOutput, PullDown>;
 type RightLedPin = Pin<Gpio15, FunctionSioOutput, PullDown>;
 
 pub struct DwightPins {
-    number_switches: [NumberSwitchPin; 10],
-    left_switch: LeftSwitchPin,
-    right_switch: RightSwitchPin,
+    pub number_switches: [NumberSwitchPin; 10],
+    pub left_switch: LeftSwitchPin,
+    pub right_switch: RightSwitchPin,
 
     speaker_pin: Option<SpeakerPin>,
     pub relay_pin: RelayPin,
@@ -52,9 +52,5 @@ impl DwightPins {
 
     pub fn speaker_pin(&mut self) -> SpeakerPin {
         self.speaker_pin.take().unwrap()
-    }
-
-    pub fn get_number_switch(&self, num: usize) -> &NumberSwitchPin {
-        &self.number_switches[num]
     }
 }

@@ -35,7 +35,19 @@ impl Frequency {
     pub const BREAK: Frequency = Frequency::Silence;
 }
 
+pub enum Switch {
+    Number(usize),
+    Left,
+    Right,
+}
+
+pub enum SwitchState {
+    Pressed,
+    Released,
+}
+
 pub trait Machine {
+    fn get_switch_state(&mut self, switch: Switch) -> SwitchState;
     fn set_led_state(&mut self, led: &Led, led_state: &LedState);
     fn set_relay_state(&mut self, relay_state: &RelayState);
     fn play_frequency(&mut self, frequency: &Frequency);

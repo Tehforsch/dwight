@@ -5,7 +5,10 @@ mod dwight_pins;
 
 use cortex_m::delay::Delay;
 use dwight_pins::DwightPins;
-use embedded_hal::{digital::v2::OutputPin, PwmPin};
+use embedded_hal::{
+    digital::v2::{InputPin, OutputPin},
+    PwmPin,
+};
 use rp_pico as bsp;
 
 use bsp::{
@@ -26,7 +29,7 @@ use bsp::hal::{
 };
 
 use dwight::{
-    machine::{Frequency, Led, LedState, Machine, RelayState},
+    machine::{Frequency, Led, LedState, Machine, RelayState, Switch, SwitchState},
     main_loop,
 };
 
@@ -82,6 +85,20 @@ impl Dwight {
 }
 
 impl Machine for Dwight {
+    fn get_switch_state(&mut self, switch: Switch) -> SwitchState {
+        let is_pressed = match switch {
+            Switch::Number(num) => self.pins.number_switches[num].is_low(),
+            Switch::Left => self.pins.left_switch.is_low(),
+            Switch::Right => self.pins.right_switch.is_low(),
+        }
+        .unwrap();
+        if is_pressed {
+            SwitchState::Pressed
+        } else {
+            SwitchState::Released
+        }
+    }
+
     fn set_led_state(&mut self, led: &Led, led_state: &LedState) {
         match (led_state, led) {
             (LedState::On, Led::Left) => self.pins.left_led.set_high(),
