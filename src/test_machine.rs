@@ -1,6 +1,7 @@
 use std::io::{self, BufRead};
 use std::sync::mpsc::{channel, Receiver, RecvTimeoutError};
 use std::thread::JoinHandle;
+use std::time::Instant;
 use std::{thread, time::Duration};
 
 use dwight::{
@@ -10,29 +11,54 @@ use dwight::{
 
 pub const RECV_TIMEOUT_MS: u64 = 5;
 
+pub const PRESSED_DURATION_MS: u128 = 200;
+
 struct TestDwight {
     input_reader: InputReader,
+    pressed: Vec<(Instant, Switch)>,
 }
 
 impl TestDwight {
     pub fn new() -> Self {
         Self {
             input_reader: InputReader::new(),
+            pressed: vec![],
         }
+    }
+}
+
+impl TestDwight {
+    fn update_switches(&mut self) {
+        let now = Instant::now();
+        while let Some(switch) = self
+            .input_reader
+            .next_input()
+            .and_then(|input| input_to_switch(&input))
+        {
+            self.pressed.push((now, switch));
+        }
+        self.pressed = self
+            .pressed
+            .drain(..)
+            .filter_map(|(instant, switch)| {
+                if now.duration_since(instant).as_millis() > PRESSED_DURATION_MS {
+                    None
+                } else {
+                    Some((instant, switch))
+                }
+            })
+            .collect();
     }
 }
 
 impl Machine for TestDwight {
     fn get_switch_state(&mut self, switch: Switch) -> SwitchState {
-        if let Some(input) = self.input_reader.next_input() {
-            let input_switch = input_to_switch(&input);
-            if let Some(input_switch) = input_switch {
-                if input_switch == switch {
-                    return SwitchState::Pressed;
-                }
-            }
+        self.update_switches();
+        if self.pressed.iter().any(|(_, pressed)| pressed == &switch) {
+            SwitchState::Pressed
+        } else {
+            SwitchState::Released
         }
-        SwitchState::Released
     }
 
     fn set_led_state(&mut self, led: Led, led_state: LedState) {
