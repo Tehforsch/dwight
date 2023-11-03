@@ -8,7 +8,7 @@ pub const XTAL_FREQ_HZ: u32 = 12_000_000u32;
 
 const DIVIDER: i32 = 40;
 
-pub const BPM: f32 = 120.0;
+pub const BPM: f32 = 200.0;
 pub const BREAK_AFTER_EACH_NOTE_IN_QUARTER_NOTES: f32 = 0.25;
 
 pub enum Length {
@@ -52,8 +52,8 @@ fn delay_after_note_ms(bpm: f32) -> f32 {
 }
 
 pub struct Note {
-    freq: Option<f32>,
-    length: Length,
+    pub freq: Option<f32>,
+    pub length: Length,
 }
 
 impl Note {
@@ -114,10 +114,12 @@ macro_rules! make_melody {
     }
 }
 
-make_melody!(
-    beethoven_9,
-    [
-        E4, 4, E4, 4, F4, 4, G4, 4, G4, 4, F4, 4, E4, 4, D4, 4, C4, 4, C4, 4, D4, 4, E4, 4, D4, 2,
-        C4, 8, C4, 2
-    ]
-);
+// make_melody!(
+//     beethoven_9,
+//     [
+//         E4, 4, E4, 4, F4, 4, G4, 4, G4, 4, F4, 4, E4, 4, D4, 4, C4, 4, C4, 4, D4, 4, E4, 4, D4, 2,
+//         C4, 8, C4, 2
+//     ]
+// );
+
+make_melody!(beethoven_9, [E4, 4]);

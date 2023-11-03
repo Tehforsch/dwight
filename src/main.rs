@@ -1,9 +1,13 @@
 #![no_std]
 #![no_main]
 
+mod dwight_pins;
 mod melody;
 
-use embedded_hal::PwmPin;
+use dwight_pins::DwightPins;
+use embedded_hal::{
+    digital::v2::{InputPin},
+};
 use rp_pico as bsp;
 
 use bsp::{
@@ -48,19 +52,34 @@ fn main() -> ! {
         sio.gpio_bank0,
         &mut pac.RESETS,
     );
+    let mut pins = DwightPins::new(pins);
 
     let mut pwm_slices = hal::pwm::Slices::new(pac.PWM, &mut pac.RESETS);
     let pwm = &mut pwm_slices.pwm0;
     pwm.set_ph_correct();
     pwm.enable();
 
-    pwm.channel_b.output_to(pins.gpio1);
+    pwm.channel_b.output_to(pins.speaker_pin());
     pwm.set_div_int(80);
 
     let melody = beethoven_9();
+    for note in melody.iter() {
+        note.playback(pwm, &mut delay);
+    }
+
+    // let mut out_pin = pins.gpio25.into_push_pull_output();
+
     loop {
-        for note in melody.iter() {
-            note.playback(pwm, &mut delay);
+        for (num, pin) in pins.iter_number_switches() {
+            if pin.is_low().unwrap() {
+                for _ in 0..(num + 1) {
+                    Note {
+                        freq: Note::A4,
+                        length: Length::Quarter,
+                    }
+                    .playback(pwm, &mut delay);
+                }
+            }
         }
     }
 }
