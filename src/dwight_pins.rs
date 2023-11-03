@@ -20,7 +20,7 @@ pub struct DwightPins {
     right_switch: RightSwitchPin,
 
     speaker_pin: Option<SpeakerPin>,
-    relay_pin: RelayPin,
+    pub relay_pin: RelayPin,
     pub left_led: LeftLedPin,
     pub right_led: RightLedPin,
 }
