@@ -5,7 +5,7 @@ mod dwight_pins;
 mod melody;
 
 use dwight_pins::DwightPins;
-use embedded_hal::digital::v2::{InputPin};
+use embedded_hal::digital::v2::InputPin;
 use rp_pico as bsp;
 
 use bsp::{
