@@ -42,6 +42,7 @@ impl Frequency {
     pub const A_SHARP_4: Frequency = Frequency::Some(466.16);
     pub const B4: Frequency = Frequency::Some(493.88);
     pub const BREAK: Frequency = Frequency::Silence;
+    pub const C5: Frequency = Frequency::Some(523.26);
 }
 
 #[derive(Debug, PartialEq, Enum, Clone, Copy)]

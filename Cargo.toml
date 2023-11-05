@@ -17,6 +17,8 @@ rp-pico = "0.8"
 enum-map = "2.7.0"
 embedded-alloc = "0.5.1"
 
+rand = { version = "0.8.5", features = ["small_rng"], default-features = false }
+
 [profile.dev]
 codegen-units = 1
 debug = 2

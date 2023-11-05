@@ -16,6 +16,7 @@ use hardware_interface::LedState;
 use hardware_interface::RelayState;
 use hardware_interface::State;
 use melody::Melody;
+use melody::CHROMATIC_SCALE;
 use programs::Program;
 use programs::ProgramSwitching;
 
@@ -89,6 +90,12 @@ impl Machine {
             get_relay_timing_ms(num),
             Action::SetRelayState(RelayState::Off),
         );
+    }
+
+    fn pour_with_melody(&mut self, num: usize) {
+        self.pour(num);
+        let num_notes_to_play = num.min(CHROMATIC_SCALE.len());
+        self.play_melody(&CHROMATIC_SCALE[..num_notes_to_play]);
     }
 
     pub fn flash_led(&mut self, led: Led, duration: Duration) {
