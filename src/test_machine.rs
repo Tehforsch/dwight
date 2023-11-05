@@ -83,7 +83,7 @@ impl HardwareInterface for TestDwight {
         dbg!(frequency);
     }
 
-    fn wait(&mut self, delay_ms: f32) {
+    fn wait_ms(&mut self, delay_ms: dwight::Duration) {
         thread::sleep(Duration::from_millis(delay_ms as u64));
     }
 

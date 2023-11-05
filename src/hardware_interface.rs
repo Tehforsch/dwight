@@ -1,6 +1,7 @@
 use enum_map::Enum;
 use enum_map::EnumMap;
 
+use crate::Duration;
 use crate::Time;
 
 #[derive(Debug)]
@@ -165,7 +166,7 @@ pub trait HardwareInterface {
     fn set_led_state(&mut self, led: Led, led_state: LedState);
     fn set_relay_state(&mut self, relay_state: RelayState);
     fn set_speaker_frequency(&mut self, frequency: &Frequency);
-    fn wait(&mut self, delay_ms: f32);
+    fn wait_ms(&mut self, delay_ms: Duration);
     fn get_elapsed_time_ms(&mut self) -> Time;
 
     fn perform_action(&mut self, action: Action) {

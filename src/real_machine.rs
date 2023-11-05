@@ -25,6 +25,7 @@ use dwight::hardware_interface::RelayState;
 use dwight::hardware_interface::Switch;
 use dwight::hardware_interface::SwitchState;
 use dwight::main_loop;
+use dwight::Duration;
 use dwight::Time;
 use dwight_pins::DwightPins;
 use embedded_alloc::Heap;
@@ -150,7 +151,7 @@ impl HardwareInterface for Dwight {
         };
     }
 
-    fn wait(&mut self, delay_ms: f32) {
+    fn wait_ms(&mut self, delay_ms: Duration) {
         self.delay.delay_ms(delay_ms as u32);
     }
 
