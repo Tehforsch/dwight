@@ -67,6 +67,7 @@ impl Program for ProgramSwitching {
                     self.program = program;
                     self.in_selection_mode = false;
                     machine.play_melody(melody);
+                    machine.wait_for_all_actions();
                 }
             }
         } else {

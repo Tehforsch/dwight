@@ -39,6 +39,7 @@ fn get_relay_timing_ms(num: usize) -> u32 {
 struct Machine {
     actions: Queue,
     time: Time,
+    wait_for_all_actions: bool,
 }
 
 impl Machine {
@@ -46,6 +47,7 @@ impl Machine {
         Self {
             actions: Queue::default(),
             time: 0,
+            wait_for_all_actions: false,
         }
     }
 
@@ -72,7 +74,11 @@ impl Machine {
         loop {
             self.time = interface.get_elapsed_time_ms();
             state = interface.update_state(state);
-            program.update(&mut self, &state);
+            if self.wait_for_all_actions {
+                self.wait_for_all_actions = !self.actions.is_empty();
+            } else {
+                program.update(&mut self, &state);
+            }
             self.perform_pending_actions(&mut interface);
         }
     }
@@ -100,6 +106,10 @@ impl Machine {
             );
             offset += note.total_length();
         }
+    }
+
+    pub fn wait_for_all_actions(&mut self) {
+        self.wait_for_all_actions = true;
     }
 
     pub fn set_relay_state(&mut self, state: RelayState) {
