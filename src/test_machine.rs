@@ -93,7 +93,7 @@ fn input_to_switch(input: &str) -> Option<Switch> {
             if input == "left" {
                 Some(Switch::Left)
             } else if input == "right" {
-                Some(Switch::Left)
+                Some(Switch::Right)
             } else {
                 None
             }

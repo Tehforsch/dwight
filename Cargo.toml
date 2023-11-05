@@ -14,8 +14,8 @@ defmt-rtt = "0.4"
 panic-probe = { version = "0.3", features = ["print-defmt"] }
 
 rp-pico = "0.8"
-smallvec = "1.11.1"
 enum-map = "2.7.0"
+embedded-alloc = "0.5.1"
 
 [profile.dev]
 codegen-units = 1

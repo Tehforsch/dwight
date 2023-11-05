@@ -1,5 +1,5 @@
-use smallvec::smallvec;
-use smallvec::SmallVec;
+use alloc::vec;
+use alloc::vec::Vec;
 
 use crate::hardware_interface::Frequency;
 
@@ -54,7 +54,7 @@ pub struct Note {
 }
 
 pub struct Melody {
-    notes: SmallVec<[Note; NUM_NOTES_NO_ALLOC]>,
+    notes: Vec<Note>,
 }
 
 impl Melody {
@@ -67,7 +67,7 @@ macro_rules! make_melody {
     ($name: ident, [$(( $note: ident, $length: literal)),* $(,)?]) => {
         pub fn $name() -> Melody {
             Melody {
-                notes: smallvec![
+                notes: vec![
                     $(
                         Note {
                             freq: Frequency::$note,

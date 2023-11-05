@@ -1,6 +1,11 @@
 #![no_std]
 #![no_main]
 
+use embedded_alloc::Heap;
+
+#[global_allocator]
+static HEAP: Heap = Heap::empty();
+
 mod dwight_pins;
 
 use cortex_m::delay::Delay;

@@ -1,13 +1,15 @@
 #![no_std]
 
+extern crate alloc;
+
 pub mod hardware_interface;
 pub mod melody;
 
+use alloc::vec::Vec;
 use hardware_interface::{
     Frequency, HardwareAction, HardwareInterface, Led, LedState, RelayState, State, Switch,
 };
-use melody::{Note, BPM};
-use smallvec::SmallVec;
+use melody::{Length, Note, BPM};
 
 pub const NUM_ACTIONS_NO_ALLOC: usize = 32;
 
@@ -26,7 +28,7 @@ struct TimedHardwareAction {
     action: HardwareAction,
 }
 
-type Queue = SmallVec<[TimedHardwareAction; NUM_ACTIONS_NO_ALLOC]>;
+type Queue = Vec<TimedHardwareAction>;
 
 fn get_relay_timing_ms(num: usize) -> u32 {
     (num as u32) * 100
@@ -118,6 +120,12 @@ impl Program for SimplePouring {
             if state.just_pressed(Switch::number(num)) {
                 return Some(Action::Pour(num));
             }
+        }
+        if state.just_pressed(Switch::Left) {
+            return Some(Action::PlayNote(Note {
+                freq: Frequency::A4,
+                length: Length::Quarter,
+            }));
         }
         None
     }
