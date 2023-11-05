@@ -55,14 +55,12 @@ impl Note {
     }
 }
 
-pub struct Melody {
-    pub notes: &'static [Note],
-}
+pub type Melody = [Note];
 
 macro_rules! make_melody {
     ($name: ident, $bpm: literal, [$(( $note: ident, $length: literal)),* $(,)?]) => {
-        pub const $name: &'static Melody = &Melody {
-            notes: &[
+        pub const $name: &'static Melody =
+            &[
                 $(
                     Note {
                         freq: Frequency::$note,
@@ -70,8 +68,7 @@ macro_rules! make_melody {
                         delay_after: delay_after_note_ms($bpm) as Duration,
                     }
                 ),*
-            ]
-        };
+            ];
     }
 }
 

@@ -98,7 +98,7 @@ impl Machine {
 
     pub fn play_melody(&mut self, melody: &Melody) {
         let mut offset = 0;
-        for note in melody.notes.iter() {
+        for note in melody.iter() {
             self.queue_action(offset, Action::SetSpeakerFrequency(note.freq.clone()));
             self.queue_action(
                 offset + note.note_length,
