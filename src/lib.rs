@@ -87,13 +87,13 @@ impl Machine {
         self.queue_action(0, Action::SetRelayState(RelayState::On));
         self.queue_action(
             get_relay_timing_ms(num),
-            Action::SetRelayState(RelayState::On),
+            Action::SetRelayState(RelayState::Off),
         );
     }
 
     pub fn flash_led(&mut self, led: Led, duration: Duration) {
         self.queue_action(0, Action::SetLedState(led, LedState::On));
-        self.queue_action(duration, Action::SetLedState(led, LedState::On));
+        self.queue_action(duration, Action::SetLedState(led, LedState::Off));
     }
 
     pub fn play_melody(&mut self, melody: &Melody) {
