@@ -1,8 +1,10 @@
-use crate::{
-    melody::{delay_after_note_ms, Note, BPM},
-    Time,
-};
-use enum_map::{Enum, EnumMap};
+use enum_map::Enum;
+use enum_map::EnumMap;
+
+use crate::melody::delay_after_note_ms;
+use crate::melody::Note;
+use crate::melody::BPM;
+use crate::Time;
 
 #[derive(Debug)]
 pub enum LedState {

@@ -1,16 +1,24 @@
-use std::io::{self, BufRead};
-use std::sync::mpsc::{channel, Receiver, RecvTimeoutError};
+use std::io::BufRead;
+use std::io::{self};
+use std::sync::mpsc::channel;
+use std::sync::mpsc::Receiver;
+use std::sync::mpsc::RecvTimeoutError;
+use std::thread;
 use std::thread::JoinHandle;
+use std::time::Duration;
 use std::time::Instant;
-use std::{thread, time::Duration};
 
-use dwight::hardware_interface::{
-    Frequency, HardwareInterface, Led, LedState, RelayState, Switch, SwitchState,
-};
-use dwight::{main_loop, Time};
+use dwight::hardware_interface::Frequency;
+use dwight::hardware_interface::HardwareInterface;
+use dwight::hardware_interface::Led;
+use dwight::hardware_interface::LedState;
+use dwight::hardware_interface::RelayState;
+use dwight::hardware_interface::Switch;
+use dwight::hardware_interface::SwitchState;
+use dwight::main_loop;
+use dwight::Time;
 
 pub const RECV_TIMEOUT_MS: u64 = 5;
-
 pub const PRESSED_DURATION_MS: u128 = 200;
 
 struct TestDwight {

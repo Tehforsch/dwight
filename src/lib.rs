@@ -5,10 +5,18 @@ pub mod melody;
 extern crate alloc;
 
 use alloc::vec::Vec;
-use hardware_interface::{
-    Frequency, HardwareAction, HardwareInterface, Led, LedState, RelayState, State, Switch,
-};
-use melody::{Length, Note, BPM};
+
+use hardware_interface::Frequency;
+use hardware_interface::HardwareAction;
+use hardware_interface::HardwareInterface;
+use hardware_interface::Led;
+use hardware_interface::LedState;
+use hardware_interface::RelayState;
+use hardware_interface::State;
+use hardware_interface::Switch;
+use melody::Length;
+use melody::Note;
+use melody::BPM;
 
 pub const NUM_ACTIONS_NO_ALLOC: usize = 32;
 

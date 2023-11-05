@@ -1,9 +1,18 @@
+use bsp::hal::gpio::bank0::Gpio0;
+use bsp::hal::gpio::bank0::Gpio1;
+use bsp::hal::gpio::bank0::Gpio12;
+use bsp::hal::gpio::bank0::Gpio13;
+use bsp::hal::gpio::bank0::Gpio14;
+use bsp::hal::gpio::bank0::Gpio15;
+use bsp::hal::gpio::DynPinId;
+use bsp::hal::gpio::FunctionNull;
+use bsp::hal::gpio::FunctionSioInput;
+use bsp::hal::gpio::FunctionSioOutput;
+use bsp::hal::gpio::Pin;
+use bsp::hal::gpio::Pins;
+use bsp::hal::gpio::PullDown;
+use bsp::hal::gpio::PullUp;
 use rp_pico as bsp;
-
-use bsp::hal::gpio::{
-    bank0::{Gpio0, Gpio1, Gpio12, Gpio13, Gpio14, Gpio15},
-    DynPinId, FunctionNull, FunctionSioInput, FunctionSioOutput, Pin, Pins, PullDown, PullUp,
-};
 
 type NumberSwitchPin = Pin<DynPinId, FunctionSioInput, PullUp>;
 type LeftSwitchPin = Pin<Gpio12, FunctionSioInput, PullUp>;

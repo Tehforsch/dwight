@@ -3,44 +3,39 @@
 
 mod dwight_pins;
 
+use bsp::entry;
+use bsp::hal::clocks::init_clocks_and_plls;
+use bsp::hal::clocks::Clock;
+use bsp::hal::pac;
+use bsp::hal::pwm::FreeRunning;
+use bsp::hal::pwm::Pwm0;
+use bsp::hal::pwm::Slice;
+use bsp::hal::sio::Sio;
+use bsp::hal::timer::Instant;
+use bsp::hal::watchdog::Watchdog;
+use bsp::hal::Timer;
+use bsp::hal::{self};
 use cortex_m::delay::Delay;
+use defmt_rtt as _;
+use dwight::hardware_interface::Frequency;
+use dwight::hardware_interface::HardwareInterface;
+use dwight::hardware_interface::Led;
+use dwight::hardware_interface::LedState;
+use dwight::hardware_interface::RelayState;
+use dwight::hardware_interface::Switch;
+use dwight::hardware_interface::SwitchState;
+use dwight::main_loop;
+use dwight::Time;
 use dwight_pins::DwightPins;
 use embedded_alloc::Heap;
-use embedded_hal::{
-    digital::v2::{InputPin, OutputPin},
-    PwmPin,
-};
-use rp_pico as bsp;
-
-use bsp::hal::{
-    clocks::{init_clocks_and_plls, Clock},
-    pac,
-    sio::Sio,
-    watchdog::Watchdog,
-};
-use bsp::{
-    entry,
-    hal::{
-        self,
-        pwm::{FreeRunning, Pwm0, Slice},
-        timer::Instant,
-        Timer,
-    },
-};
-
-use defmt_rtt as _;
-use dwight::main_loop;
+use embedded_hal::digital::v2::InputPin;
+use embedded_hal::digital::v2::OutputPin;
+use embedded_hal::PwmPin;
 use panic_probe as _;
+use rp_pico as bsp;
 
 #[global_allocator]
 static HEAP: Heap = Heap::empty();
-
-use dwight::{
-    hardware_interface::{
-        Frequency, HardwareInterface, Led, LedState, RelayState, Switch, SwitchState,
-    },
-    Time,
-};
 
 /// External high-speed crystal on the Raspberry Pi Pico board is 12 MHz. Adjust
 /// if your board has a different frequency
