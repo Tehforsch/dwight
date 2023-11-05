@@ -7,7 +7,7 @@ use std::{thread, time::Duration};
 use dwight::hardware_interface::{
     Frequency, HardwareInterface, Led, LedState, RelayState, Switch, SwitchState,
 };
-use dwight::{Machine, SimplePouring};
+use dwight::{main_loop, Time};
 
 pub const RECV_TIMEOUT_MS: u64 = 5;
 
@@ -16,6 +16,7 @@ pub const PRESSED_DURATION_MS: u128 = 200;
 struct TestDwight {
     input_reader: InputReader,
     pressed: Vec<(Instant, Switch)>,
+    start: Instant,
 }
 
 impl TestDwight {
@@ -23,6 +24,7 @@ impl TestDwight {
         Self {
             input_reader: InputReader::new(),
             pressed: vec![],
+            start: Instant::now(),
         }
     }
 }
@@ -76,6 +78,10 @@ impl HardwareInterface for TestDwight {
     fn wait(&mut self, delay_ms: f32) {
         thread::sleep(Duration::from_millis(delay_ms as u64));
     }
+
+    fn get_elapsed_time_ms(&mut self) -> Time {
+        Instant::now().duration_since(self.start).as_millis() as Time
+    }
 }
 
 fn input_to_switch(input: &str) -> Option<Switch> {
@@ -126,8 +132,5 @@ impl InputReader {
 }
 
 fn main() {
-    let dwight_interface = TestDwight::new();
-    let program = SimplePouring;
-    let machine = Machine::new(program, dwight_interface);
-    machine.run();
+    main_loop(TestDwight::new())
 }

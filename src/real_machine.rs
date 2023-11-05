@@ -16,6 +16,8 @@ use bsp::{
     hal::{
         self,
         pwm::{FreeRunning, Pwm0, Slice},
+        timer::Instant,
+        Timer,
     },
 };
 use defmt_rtt as _;
@@ -32,7 +34,7 @@ use dwight::{
     hardware_interface::{
         Frequency, HardwareInterface, Led, LedState, RelayState, Switch, SwitchState,
     },
-    Machine, SimplePouring,
+    main_loop, Time,
 };
 
 /// External high-speed crystal on the Raspberry Pi Pico board is 12 MHz. Adjust
@@ -45,6 +47,8 @@ pub struct Dwight {
     pins: DwightPins,
     pwm: Slice<Pwm0, FreeRunning>,
     delay: Delay,
+    timer: Timer,
+    start: Instant,
 }
 
 impl Dwight {
@@ -67,6 +71,7 @@ impl Dwight {
         .unwrap();
 
         let delay = Delay::new(core.SYST, clocks.system_clock.freq().to_Hz());
+        let timer = Timer::new(pac.TIMER, &mut pac.RESETS, &clocks);
 
         let pins = hal::gpio::Pins::new(
             pac.IO_BANK0,
@@ -82,7 +87,14 @@ impl Dwight {
 
         pwm.channel_b.output_to(pins.speaker_pin());
         pwm.set_div_int(80);
-        Dwight { pins, pwm, delay }
+        let start = timer.get_counter();
+        Dwight {
+            pins,
+            pwm,
+            delay,
+            timer,
+            start,
+        }
     }
 }
 
@@ -141,12 +153,17 @@ impl HardwareInterface for Dwight {
     fn wait(&mut self, delay_ms: f32) {
         self.delay.delay_ms(delay_ms as u32);
     }
+
+    fn get_elapsed_time_ms(&mut self) -> Time {
+        self.timer
+            .get_counter()
+            .checked_duration_since(self.start)
+            .unwrap()
+            .to_millis() as Time
+    }
 }
 
 #[entry]
 fn main() -> ! {
-    let dwight_interface = Dwight::new();
-    let program = SimplePouring;
-    let machine = Machine::new(program, dwight_interface);
-    machine.run();
+    main_loop(Dwight::new())
 }

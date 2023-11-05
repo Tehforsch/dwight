@@ -1,4 +1,7 @@
-use crate::melody::{delay_after_note_ms, Note, BPM};
+use crate::{
+    melody::{delay_after_note_ms, Note, BPM},
+    Time,
+};
 use enum_map::{Enum, EnumMap};
 
 #[derive(Debug)]
@@ -7,7 +10,7 @@ pub enum LedState {
     Off,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 pub enum Led {
     Left,
     Right,
@@ -116,12 +119,27 @@ impl State {
     }
 }
 
+pub enum HardwareAction {
+    SetLedState(Led, LedState),
+    SetRelayState(RelayState),
+    PlayFrequency(Frequency),
+}
+
 pub trait HardwareInterface {
     fn get_switch_state(&mut self, switch: Switch) -> SwitchState;
     fn set_led_state(&mut self, led: Led, led_state: LedState);
     fn set_relay_state(&mut self, relay_state: RelayState);
     fn play_frequency(&mut self, frequency: &Frequency);
     fn wait(&mut self, delay_ms: f32);
+    fn get_elapsed_time_ms(&mut self) -> Time;
+
+    fn perform_action(&mut self, action: HardwareAction) {
+        match action {
+            HardwareAction::SetLedState(led, state) => self.set_led_state(led, state),
+            HardwareAction::SetRelayState(state) => self.set_relay_state(state),
+            HardwareAction::PlayFrequency(freq) => self.play_frequency(&freq),
+        }
+    }
 
     fn update_state(&mut self, previous: State) -> State {
         previous.update(EnumMap::from_fn(|switch| self.get_switch_state(switch)))
