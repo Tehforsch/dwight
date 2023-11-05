@@ -1,6 +1,5 @@
 use crate::hardware_interface::Frequency;
 
-pub const BPM: f32 = 200.0;
 pub const BREAK_AFTER_EACH_NOTE_IN_QUARTER_NOTES: f32 = 0.25;
 
 pub const NUM_NOTES_NO_ALLOC: usize = 32;
@@ -51,18 +50,14 @@ pub struct Note {
 }
 
 pub struct Melody {
-    notes: &'static [Note],
-}
-
-impl Melody {
-    pub fn iter(&self) -> impl Iterator<Item = &Note> {
-        self.notes.iter()
-    }
+    pub bpm: f32,
+    pub notes: &'static [Note],
 }
 
 macro_rules! make_melody {
-    ($name: ident, [$(( $note: ident, $length: literal)),* $(,)?]) => {
+    ($name: ident, $bpm: literal, [$(( $note: ident, $length: literal)),* $(,)?]) => {
         pub const $name: &'static Melody = &Melody {
+            bpm: $bpm,
             notes: &[
                 $(
                     Note {
@@ -78,6 +73,7 @@ macro_rules! make_melody {
 #[rustfmt::skip]
 make_melody!(
     BEETHOVEN_9,
+    120.0,
     [
         (E4, 4),
         (E4, 4),

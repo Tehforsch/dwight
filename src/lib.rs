@@ -17,7 +17,6 @@ use hardware_interface::State;
 use hardware_interface::Switch;
 use melody::delay_after_note_ms;
 use melody::Melody;
-use melody::BPM;
 
 use crate::melody::BEETHOVEN_9;
 
@@ -49,27 +48,6 @@ struct Machine<H, P> {
     interface: H,
     actions: Queue,
     time: Time,
-}
-
-fn melody_to_hardware_actions(melody: &Melody) -> impl Iterator<Item = TimedHardwareAction> + '_ {
-    let mut offset = 0;
-    melody.iter().flat_map(move |note| {
-        let total_delay = note.length.as_ms(BPM);
-        let break_after_note = delay_after_note_ms(BPM);
-        let note_length = (total_delay - break_after_note) as Time;
-        offset += total_delay as Time;
-        [
-            TimedHardwareAction {
-                action: HardwareAction::PlayFrequency(note.freq.clone()),
-                timing_ms: offset,
-            },
-            TimedHardwareAction {
-                action: HardwareAction::PlayFrequency(Frequency::Silence),
-                timing_ms: offset + note_length,
-            },
-        ]
-        .into_iter()
-    })
 }
 
 impl<H: HardwareInterface, P: Program> Machine<H, P> {
@@ -105,8 +83,20 @@ impl<H: HardwareInterface, P: Program> Machine<H, P> {
                 );
             }
             Action::Play(melody) => {
-                for action in melody_to_hardware_actions(melody) {
-                    make_action_in_ms_from_now(action.timing_ms, action.action);
+                let mut offset = 0;
+                for note in melody.notes.iter() {
+                    let total_delay = note.length.as_ms(melody.bpm);
+                    let break_after_note = delay_after_note_ms(melody.bpm);
+                    let note_length = (total_delay - break_after_note) as Time;
+                    offset += total_delay as Time;
+                    make_action_in_ms_from_now(
+                        offset,
+                        HardwareAction::PlayFrequency(note.freq.clone()),
+                    );
+                    make_action_in_ms_from_now(
+                        offset + note_length,
+                        HardwareAction::PlayFrequency(Frequency::Silence),
+                    );
                 }
             }
         }
