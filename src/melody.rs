@@ -1,4 +1,5 @@
 use crate::hardware_interface::Frequency;
+use crate::Duration;
 
 pub const BREAK_AFTER_EACH_NOTE_IN_QUARTER_NOTES: f32 = 0.25;
 
@@ -11,13 +12,8 @@ pub enum Length {
     Sixteenth,
 }
 
-fn factor_to_ms(factor: f32, bpm: f32) -> f32 {
-    let bps = bpm / 60.0;
-    1000.0 / bps * factor
-}
-
 impl Length {
-    pub fn as_ms(&self, bpm: f32) -> f32 {
+    const fn as_ms(&self, bpm: f32) -> f32 {
         factor_to_ms(
             match self {
                 Length::Half => 2.0,
@@ -29,7 +25,7 @@ impl Length {
         )
     }
 
-    pub const fn from_num(num: usize) -> Self {
+    const fn from_num(num: usize) -> Self {
         match num {
             2 => Self::Half,
             4 => Self::Quarter,
@@ -40,29 +36,40 @@ impl Length {
     }
 }
 
-pub fn delay_after_note_ms(bpm: f32) -> f32 {
+const fn factor_to_ms(factor: f32, bpm: f32) -> f32 {
+    let bps = bpm / 60.0;
+    1000.0 / bps * factor
+}
+
+const fn delay_after_note_ms(bpm: f32) -> f32 {
     factor_to_ms(BREAK_AFTER_EACH_NOTE_IN_QUARTER_NOTES, bpm)
 }
 
 pub struct Note {
     pub freq: Frequency,
-    pub length: Length,
+    pub note_length: Duration,
+    pub delay_after: Duration,
+}
+
+impl Note {
+    pub fn total_length(&self) -> Duration {
+        self.note_length + self.delay_after
+    }
 }
 
 pub struct Melody {
-    pub bpm: f32,
     pub notes: &'static [Note],
 }
 
 macro_rules! make_melody {
     ($name: ident, $bpm: literal, [$(( $note: ident, $length: literal)),* $(,)?]) => {
         pub const $name: &'static Melody = &Melody {
-            bpm: $bpm,
             notes: &[
                 $(
                     Note {
                         freq: Frequency::$note,
-                        length: Length::from_num($length),
+                        note_length: Length::from_num($length).as_ms($bpm) as Duration,
+                        delay_after: delay_after_note_ms($bpm) as Duration,
                     }
                 ),*
             ]
@@ -73,7 +80,7 @@ macro_rules! make_melody {
 #[rustfmt::skip]
 make_melody!(
     BEETHOVEN_9,
-    120.0,
+    180.0,
     [
         (E4, 4),
         (E4, 4),
@@ -88,7 +95,7 @@ make_melody!(
         (D4, 4),
         (E4, 4),
         (E4, 2),
-        (C4, 8),
-        (C4, 2),
+        (D4, 8),
+        (D4, 2),
     ]
 );

@@ -1,4 +1,5 @@
 #![no_std]
+#![feature(const_fn_floating_point_arithmetic)]
 pub mod hardware_interface;
 pub mod melody;
 
@@ -15,7 +16,6 @@ use hardware_interface::LedState;
 use hardware_interface::RelayState;
 use hardware_interface::State;
 use hardware_interface::Switch;
-use melody::delay_after_note_ms;
 use melody::Melody;
 
 use crate::melody::BEETHOVEN_9;
@@ -32,6 +32,7 @@ enum Action {
     Play(&'static Melody),
 }
 
+#[derive(Debug)]
 struct TimedHardwareAction {
     timing_ms: Time,
     action: HardwareAction,
@@ -85,18 +86,15 @@ impl<H: HardwareInterface, P: Program> Machine<H, P> {
             Action::Play(melody) => {
                 let mut offset = 0;
                 for note in melody.notes.iter() {
-                    let total_delay = note.length.as_ms(melody.bpm);
-                    let break_after_note = delay_after_note_ms(melody.bpm);
-                    let note_length = (total_delay - break_after_note) as Time;
-                    offset += total_delay as Time;
                     make_action_in_ms_from_now(
                         offset,
                         HardwareAction::PlayFrequency(note.freq.clone()),
                     );
                     make_action_in_ms_from_now(
-                        offset + note_length,
+                        offset + note.note_length,
                         HardwareAction::PlayFrequency(Frequency::Silence),
                     );
+                    offset += note.total_length();
                 }
             }
         }

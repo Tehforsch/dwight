@@ -118,6 +118,7 @@ impl State {
     }
 }
 
+#[derive(Debug)]
 pub enum HardwareAction {
     SetLedState(Led, LedState),
     SetRelayState(RelayState),
