@@ -1,21 +1,69 @@
 #![no_std]
 
-pub mod machine;
+pub mod hardware_interface;
 pub mod melody;
 
-use machine::{Led, LedState, Machine, Switch};
-use melody::beethoven_9;
+use core::time::Duration;
 
-pub fn main_loop(mut machine: impl Machine) -> ! {
-    let melody = beethoven_9();
-    loop {
-        if machine.is_pressed(Switch::Number(0)) {
-            machine.set_led_state(Led::Left, LedState::On);
-        } else if machine.is_pressed(Switch::Number(1)) {
-            machine.set_led_state(Led::Left, LedState::Off);
-        } else if machine.is_pressed(Switch::Left) {
-            for note in melody.iter() {
-                machine.play_note(&note);
+use hardware_interface::{HardwareInterface, Led, State, Switch};
+use melody::Note;
+use smallvec::SmallVec;
+
+pub const NUM_ACTIONS_NO_ALLOC: usize = 32;
+
+enum Action {
+    Pour(usize),
+    FlashLed(Led, Duration),
+    PlayNote(Note),
+}
+
+#[derive(Default)]
+pub struct ActionQueue {
+    actions: SmallVec<[Action; NUM_ACTIONS_NO_ALLOC]>,
+}
+
+impl ActionQueue {
+    fn add(&mut self, action: Action) {
+        self.actions.push(action);
+    }
+
+    fn act(&mut self, interface: &mut impl HardwareInterface) {}
+}
+
+pub struct Machine<H, P> {
+    program: P,
+    interface: H,
+}
+
+impl<H, P> Machine<H, P> {
+    pub fn new(program: P, interface: H) -> Self {
+        Self { program, interface }
+    }
+}
+
+impl<H: HardwareInterface, P: Program> Machine<H, P> {
+    pub fn run(mut self) -> ! {
+        let mut queue = ActionQueue::default();
+        let mut state = State::new();
+        loop {
+            state = self.interface.update_state(state);
+            self.program.update(&mut queue, &state);
+            queue.act(&mut self.interface);
+        }
+    }
+}
+
+pub trait Program {
+    fn update(&mut self, queue: &mut ActionQueue, state: &State);
+}
+
+pub struct SimplePouring;
+
+impl Program for SimplePouring {
+    fn update(&mut self, queue: &mut ActionQueue, state: &State) {
+        for num in 0..10 {
+            if state.just_pressed(Switch::number(num)) {
+                queue.add(Action::Pour(num));
             }
         }
     }

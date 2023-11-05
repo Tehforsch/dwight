@@ -4,10 +4,10 @@ use std::thread::JoinHandle;
 use std::time::Instant;
 use std::{thread, time::Duration};
 
-use dwight::{
-    machine::{Frequency, Led, LedState, Machine, RelayState, Switch, SwitchState},
-    main_loop,
+use dwight::hardware_interface::{
+    Frequency, HardwareInterface, Led, LedState, RelayState, Switch, SwitchState,
 };
+use dwight::{Machine, SimplePouring};
 
 pub const RECV_TIMEOUT_MS: u64 = 5;
 
@@ -51,7 +51,7 @@ impl TestDwight {
     }
 }
 
-impl Machine for TestDwight {
+impl HardwareInterface for TestDwight {
     fn get_switch_state(&mut self, switch: Switch) -> SwitchState {
         self.update_switches();
         if self.pressed.iter().any(|(_, pressed)| pressed == &switch) {
@@ -82,7 +82,7 @@ fn input_to_switch(input: &str) -> Option<Switch> {
     input
         .parse::<usize>()
         .ok()
-        .map(|num| Switch::Number(num))
+        .map(|num| Switch::number(num))
         .or_else(|| {
             if input == "left" {
                 Some(Switch::Left)
@@ -126,6 +126,8 @@ impl InputReader {
 }
 
 fn main() {
-    let dwight = TestDwight::new();
-    main_loop(dwight);
+    let dwight_interface = TestDwight::new();
+    let program = SimplePouring;
+    let machine = Machine::new(program, dwight_interface);
+    machine.run();
 }

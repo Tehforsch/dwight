@@ -29,8 +29,10 @@ use bsp::hal::{
 };
 
 use dwight::{
-    machine::{Frequency, Led, LedState, Machine, RelayState, Switch, SwitchState},
-    main_loop,
+    hardware_interface::{
+        Frequency, HardwareInterface, Led, LedState, RelayState, Switch, SwitchState,
+    },
+    Machine, SimplePouring,
 };
 
 /// External high-speed crystal on the Raspberry Pi Pico board is 12 MHz. Adjust
@@ -84,10 +86,19 @@ impl Dwight {
     }
 }
 
-impl Machine for Dwight {
+impl HardwareInterface for Dwight {
     fn get_switch_state(&mut self, switch: Switch) -> SwitchState {
         let is_pressed = match switch {
-            Switch::Number(num) => self.pins.number_switches[num].is_low(),
+            Switch::Number0 => self.pins.number_switches[0].is_low(),
+            Switch::Number1 => self.pins.number_switches[1].is_low(),
+            Switch::Number2 => self.pins.number_switches[2].is_low(),
+            Switch::Number3 => self.pins.number_switches[3].is_low(),
+            Switch::Number4 => self.pins.number_switches[4].is_low(),
+            Switch::Number5 => self.pins.number_switches[5].is_low(),
+            Switch::Number6 => self.pins.number_switches[6].is_low(),
+            Switch::Number7 => self.pins.number_switches[7].is_low(),
+            Switch::Number8 => self.pins.number_switches[8].is_low(),
+            Switch::Number9 => self.pins.number_switches[9].is_low(),
             Switch::Left => self.pins.left_switch.is_low(),
             Switch::Right => self.pins.right_switch.is_low(),
         }
@@ -134,6 +145,8 @@ impl Machine for Dwight {
 
 #[entry]
 fn main() -> ! {
-    let dwight = Dwight::new();
-    main_loop(dwight);
+    let dwight_interface = Dwight::new();
+    let program = SimplePouring;
+    let machine = Machine::new(program, dwight_interface);
+    machine.run();
 }

@@ -1,7 +1,7 @@
 use smallvec::smallvec;
 use smallvec::SmallVec;
 
-use crate::machine::Frequency;
+use crate::hardware_interface::Frequency;
 
 pub const BPM: f32 = 200.0;
 pub const BREAK_AFTER_EACH_NOTE_IN_QUARTER_NOTES: f32 = 0.25;

@@ -15,6 +15,7 @@ panic-probe = { version = "0.3", features = ["print-defmt"] }
 
 rp-pico = "0.8"
 smallvec = "1.11.1"
+enum-map = "2.7.0"
 
 [profile.dev]
 codegen-units = 1
