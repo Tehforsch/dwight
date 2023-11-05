@@ -41,7 +41,7 @@ static HEAP: Heap = Heap::empty();
 /// if your board has a different frequency
 pub const XTAL_FREQ_HZ: u32 = 12_000_000u32;
 
-const DIVIDER: i32 = 40;
+const DIVIDER: u8 = 80;
 
 pub struct Dwight {
     pins: DwightPins,
@@ -86,7 +86,7 @@ impl Dwight {
         pwm.enable();
 
         pwm.channel_b.output_to(pins.speaker_pin());
-        pwm.set_div_int(80);
+        pwm.set_div_int(DIVIDER);
         let start = timer.get_counter();
         Dwight {
             pins,
@@ -142,7 +142,7 @@ impl HardwareInterface for Dwight {
 
     fn play_frequency(&mut self, freq: &Frequency) {
         if let Frequency::Some(freq) = freq {
-            let top = (XTAL_FREQ_HZ as f32 / DIVIDER as f32 / freq) as u16;
+            let top = (XTAL_FREQ_HZ as f32 / (DIVIDER as f32 * 0.5) / freq) as u16;
             self.pwm.channel_b.set_duty(top / 2);
             self.pwm.set_top(top);
         } else {
