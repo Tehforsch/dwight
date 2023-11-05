@@ -19,7 +19,7 @@ use dwight::main_loop;
 use dwight::Time;
 
 pub const RECV_TIMEOUT_MS: u64 = 5;
-pub const PRESSED_DURATION_MS: u128 = 200;
+pub const PRESSED_DURATION_MS: u128 = 1000;
 
 struct TestDwight {
     input_reader: InputReader,

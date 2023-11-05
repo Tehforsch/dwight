@@ -74,6 +74,23 @@ impl Switch {
             _ => panic!(),
         }
     }
+
+    pub fn get_num(&self) -> Option<usize> {
+        match self {
+            Switch::Number0 => Some(0),
+            Switch::Number1 => Some(1),
+            Switch::Number2 => Some(2),
+            Switch::Number3 => Some(3),
+            Switch::Number4 => Some(4),
+            Switch::Number5 => Some(5),
+            Switch::Number6 => Some(6),
+            Switch::Number7 => Some(7),
+            Switch::Number8 => Some(8),
+            Switch::Number9 => Some(9),
+            Switch::Left => None,
+            Switch::Right => None,
+        }
+    }
 }
 
 #[derive(Debug)]

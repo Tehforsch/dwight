@@ -16,9 +16,8 @@ use hardware_interface::LedState;
 use hardware_interface::RelayState;
 use hardware_interface::State;
 use melody::Melody;
-use programs::ContinuousPouring;
 use programs::Program;
-use programs::SimplePouring;
+use programs::ProgramSwitching;
 
 pub const NUM_MS_PER_SHOT: Time = 100;
 
@@ -113,5 +112,5 @@ impl Machine {
 }
 
 pub fn main_loop(interface: impl HardwareInterface) -> ! {
-    Machine::new().run(interface, ContinuousPouring)
+    Machine::new().run(interface, ProgramSwitching::default())
 }
