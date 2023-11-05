@@ -6,7 +6,9 @@ pub const BREAK_AFTER_EACH_NOTE_IN_QUARTER_NOTES: f32 = 0.25;
 pub enum Length {
     Half,
     Quarter,
+    DottedEighth,
     Eighth,
+    DottedSixteenth,
     Sixteenth,
 }
 
@@ -16,7 +18,9 @@ impl Length {
             match self {
                 Length::Half => 2.0,
                 Length::Quarter => 1.0,
+                Length::DottedEighth => 0.75,
                 Length::Eighth => 0.5,
+                Length::DottedSixteenth => 0.375,
                 Length::Sixteenth => 0.25,
             },
             bpm,
@@ -27,7 +31,9 @@ impl Length {
         match num {
             2 => Self::Half,
             4 => Self::Quarter,
+            6 => Self::DottedEighth,
             8 => Self::Eighth,
+            12 => Self::DottedSixteenth,
             16 => Self::Sixteenth,
             _ => unimplemented!(),
         }
@@ -117,14 +123,17 @@ make_melody!(
     140.0,
     [
         (F4, 16),
-        (C4, 4),
+        (C4, 16),
+        (BREAK, 8),
         (G_SHARP_4, 16),
-        (C4, 4),
+        (C4, 16),
+        (BREAK, 8),
         (G4, 16),
-        (C4, 4),
+        (C4, 16),
+        (BREAK, 8),
         (F4, 16),
-        (C4, 4),
-        (C5, 8),
+        (C4, 16),
+        (C5, 16),
     ]
 );
 
