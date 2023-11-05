@@ -3,8 +3,6 @@ use crate::Duration;
 
 pub const BREAK_AFTER_EACH_NOTE_IN_QUARTER_NOTES: f32 = 0.25;
 
-pub const NUM_NOTES_NO_ALLOC: usize = 32;
-
 pub enum Length {
     Half,
     Quarter,

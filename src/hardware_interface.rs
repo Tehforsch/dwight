@@ -116,10 +116,17 @@ impl State {
     pub fn just_pressed(&self, switch: Switch) -> bool {
         self.current[switch].is_pressed() && !self.previous[switch].is_pressed()
     }
+
+    pub fn iter_just_pressed(&self) -> impl Iterator<Item = Switch> + '_ {
+        self.current
+            .iter()
+            .map(|(switch, _)| switch)
+            .filter(|switch| self.just_pressed(*switch))
+    }
 }
 
 #[derive(Debug)]
-pub enum HardwareAction {
+pub enum Action {
     SetLedState(Led, LedState),
     SetRelayState(RelayState),
     PlayFrequency(Frequency),
@@ -133,11 +140,11 @@ pub trait HardwareInterface {
     fn wait(&mut self, delay_ms: f32);
     fn get_elapsed_time_ms(&mut self) -> Time;
 
-    fn perform_action(&mut self, action: HardwareAction) {
+    fn perform_action(&mut self, action: Action) {
         match action {
-            HardwareAction::SetLedState(led, state) => self.set_led_state(led, state),
-            HardwareAction::SetRelayState(state) => self.set_relay_state(state),
-            HardwareAction::PlayFrequency(freq) => self.play_frequency(&freq),
+            Action::SetLedState(led, state) => self.set_led_state(led, state),
+            Action::SetRelayState(state) => self.set_relay_state(state),
+            Action::PlayFrequency(freq) => self.play_frequency(&freq),
         }
     }
 
