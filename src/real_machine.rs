@@ -1,21 +1,23 @@
 #![no_std]
 #![no_main]
 
-use embedded_alloc::Heap;
-
-#[global_allocator]
-static HEAP: Heap = Heap::empty();
-
 mod dwight_pins;
 
 use cortex_m::delay::Delay;
 use dwight_pins::DwightPins;
+use embedded_alloc::Heap;
 use embedded_hal::{
     digital::v2::{InputPin, OutputPin},
     PwmPin,
 };
 use rp_pico as bsp;
 
+use bsp::hal::{
+    clocks::{init_clocks_and_plls, Clock},
+    pac,
+    sio::Sio,
+    watchdog::Watchdog,
+};
 use bsp::{
     entry,
     hal::{
@@ -25,21 +27,19 @@ use bsp::{
         Timer,
     },
 };
+
 use defmt_rtt as _;
+use dwight::main_loop;
 use panic_probe as _;
 
-use bsp::hal::{
-    clocks::{init_clocks_and_plls, Clock},
-    pac,
-    sio::Sio,
-    watchdog::Watchdog,
-};
+#[global_allocator]
+static HEAP: Heap = Heap::empty();
 
 use dwight::{
     hardware_interface::{
         Frequency, HardwareInterface, Led, LedState, RelayState, Switch, SwitchState,
     },
-    main_loop, Time,
+    Time,
 };
 
 /// External high-speed crystal on the Raspberry Pi Pico board is 12 MHz. Adjust
@@ -168,7 +168,15 @@ impl HardwareInterface for Dwight {
     }
 }
 
+fn init_allocator() {
+    use core::mem::MaybeUninit;
+    const HEAP_SIZE: usize = 1024;
+    static mut HEAP_MEM: [MaybeUninit<u8>; HEAP_SIZE] = [MaybeUninit::uninit(); HEAP_SIZE];
+    unsafe { HEAP.init(HEAP_MEM.as_ptr() as usize, HEAP_SIZE) }
+}
+
 #[entry]
 fn main() -> ! {
+    init_allocator();
     main_loop(Dwight::new())
 }

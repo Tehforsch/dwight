@@ -1,9 +1,8 @@
 #![no_std]
-
-extern crate alloc;
-
 pub mod hardware_interface;
 pub mod melody;
+
+extern crate alloc;
 
 use alloc::vec::Vec;
 use hardware_interface::{
@@ -118,7 +117,11 @@ impl Program for SimplePouring {
     fn update(&mut self, state: &State) -> Option<Action> {
         for num in 0..10 {
             if state.just_pressed(Switch::number(num)) {
-                return Some(Action::Pour(num));
+                return Some(Action::PlayNote(Note {
+                    freq: Frequency::A4,
+                    length: Length::Quarter,
+                }));
+                // return Some(Action::Pour(num));
             }
         }
         if state.just_pressed(Switch::Left) {
