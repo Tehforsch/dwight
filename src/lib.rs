@@ -15,11 +15,13 @@ use hardware_interface::LedState;
 use hardware_interface::RelayState;
 use hardware_interface::State;
 use hardware_interface::Switch;
-use melody::Length;
-use melody::Note;
+use melody::delay_after_note_ms;
+use melody::Melody;
 use melody::BPM;
 
-pub const NUM_ACTIONS_NO_ALLOC: usize = 32;
+use crate::melody::BEETHOVEN_9;
+
+pub const NUM_MS_PER_SHOT: Time = 100;
 
 pub type Time = u32;
 pub type Duration = u32;
@@ -28,7 +30,7 @@ pub type Duration = u32;
 enum Action {
     Pour(usize),
     FlashLed(Led, Duration),
-    PlayNote(Note),
+    Play(&'static Melody),
 }
 
 struct TimedHardwareAction {
@@ -39,7 +41,7 @@ struct TimedHardwareAction {
 type Queue = Vec<TimedHardwareAction>;
 
 fn get_relay_timing_ms(num: usize) -> u32 {
-    (num as u32) * 100
+    (num as u32) * NUM_MS_PER_SHOT
 }
 
 struct Machine<H, P> {
@@ -47,6 +49,27 @@ struct Machine<H, P> {
     interface: H,
     actions: Queue,
     time: Time,
+}
+
+fn melody_to_hardware_actions(melody: &Melody) -> impl Iterator<Item = TimedHardwareAction> + '_ {
+    let mut offset = 0;
+    melody.iter().flat_map(move |note| {
+        let total_delay = note.length.as_ms(BPM);
+        let break_after_note = delay_after_note_ms(BPM);
+        let note_length = (total_delay - break_after_note) as Time;
+        offset += total_delay as Time;
+        [
+            TimedHardwareAction {
+                action: HardwareAction::PlayFrequency(note.freq.clone()),
+                timing_ms: offset,
+            },
+            TimedHardwareAction {
+                action: HardwareAction::PlayFrequency(Frequency::Silence),
+                timing_ms: offset + note_length,
+            },
+        ]
+        .into_iter()
+    })
 }
 
 impl<H: HardwareInterface, P: Program> Machine<H, P> {
@@ -81,17 +104,15 @@ impl<H: HardwareInterface, P: Program> Machine<H, P> {
                     HardwareAction::SetLedState(led, LedState::On),
                 );
             }
-            Action::PlayNote(note) => {
-                make_action_in_ms_from_now(0, HardwareAction::PlayFrequency(note.freq));
-                make_action_in_ms_from_now(
-                    note.length.as_ms(BPM) as Duration,
-                    HardwareAction::PlayFrequency(Frequency::Silence),
-                );
+            Action::Play(melody) => {
+                for action in melody_to_hardware_actions(melody) {
+                    make_action_in_ms_from_now(action.timing_ms, action.action);
+                }
             }
         }
     }
 
-    fn act(&mut self) {
+    fn perform_pending_actions(&mut self) {
         let (actions_to_perform, remaining_actions): (Queue, Queue) = self
             .actions
             .drain(..)
@@ -107,36 +128,26 @@ impl<H: HardwareInterface, P: Program> Machine<H, P> {
         loop {
             self.time = self.interface.get_elapsed_time_ms();
             state = self.interface.update_state(state);
-            let actions = self.program.update(&state);
-            for action in actions {
+            for action in self.program.get_new_actions(&state) {
                 self.add(action);
             }
-            self.act();
+            self.perform_pending_actions();
         }
     }
 }
 
 trait Program {
-    fn update(&mut self, state: &State) -> Vec<Action>;
+    fn get_new_actions(&mut self, state: &State) -> Vec<Action>;
 }
 
 struct SimplePouring;
 
 impl Program for SimplePouring {
-    fn update(&mut self, state: &State) -> Vec<Action> {
+    fn get_new_actions(&mut self, state: &State) -> Vec<Action> {
         for num in 0..10 {
             if state.just_pressed(Switch::number(num)) {
-                return vec![Action::PlayNote(Note {
-                    freq: Frequency::A4,
-                    length: Length::Quarter,
-                })];
+                return vec![Action::Play(&BEETHOVEN_9)];
             }
-        }
-        if state.just_pressed(Switch::Left) {
-            return vec![Action::PlayNote(Note {
-                freq: Frequency::A4,
-                length: Length::Quarter,
-            })];
         }
         vec![]
     }

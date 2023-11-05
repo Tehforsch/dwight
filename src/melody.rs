@@ -1,6 +1,3 @@
-use alloc::vec;
-use alloc::vec::Vec;
-
 use crate::hardware_interface::Frequency;
 
 pub const BPM: f32 = 200.0;
@@ -33,7 +30,7 @@ impl Length {
         )
     }
 
-    pub fn from_num(num: usize) -> Self {
+    pub const fn from_num(num: usize) -> Self {
         match num {
             2 => Self::Half,
             4 => Self::Quarter,
@@ -54,7 +51,7 @@ pub struct Note {
 }
 
 pub struct Melody {
-    notes: Vec<Note>,
+    notes: &'static [Note],
 }
 
 impl Melody {
@@ -65,24 +62,22 @@ impl Melody {
 
 macro_rules! make_melody {
     ($name: ident, [$(( $note: ident, $length: literal)),* $(,)?]) => {
-        pub fn $name() -> Melody {
-            Melody {
-                notes: vec![
-                    $(
-                        Note {
-                            freq: Frequency::$note,
-                            length: Length::from_num($length),
-                        }
-                    ),*
-                ]
-            }
-        }
+        pub const $name: &'static Melody = &Melody {
+            notes: &[
+                $(
+                    Note {
+                        freq: Frequency::$note,
+                        length: Length::from_num($length),
+                    }
+                ),*
+            ]
+        };
     }
 }
 
 #[rustfmt::skip]
 make_melody!(
-    beethoven_9,
+    BEETHOVEN_9,
     [
         (E4, 4),
         (E4, 4),

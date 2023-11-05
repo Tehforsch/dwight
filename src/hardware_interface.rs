@@ -1,9 +1,6 @@
 use enum_map::Enum;
 use enum_map::EnumMap;
 
-use crate::melody::delay_after_note_ms;
-use crate::melody::Note;
-use crate::melody::BPM;
 use crate::Time;
 
 #[derive(Debug)]
@@ -24,7 +21,7 @@ pub enum RelayState {
     Off,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum Frequency {
     Some(f32),
     Silence,
@@ -145,14 +142,5 @@ pub trait HardwareInterface {
 
     fn update_state(&mut self, previous: State) -> State {
         previous.update(EnumMap::from_fn(|switch| self.get_switch_state(switch)))
-    }
-
-    fn play_note(&mut self, note: &Note) {
-        self.play_frequency(&note.freq);
-        let total_delay = note.length.as_ms(BPM);
-        let break_after_note = delay_after_note_ms(BPM);
-        self.wait(total_delay - break_after_note);
-        self.play_frequency(&Frequency::Silence);
-        self.wait(break_after_note);
     }
 }
