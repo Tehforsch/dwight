@@ -1,7 +1,12 @@
+use smallvec::smallvec;
+use smallvec::SmallVec;
+
 use crate::machine::Frequency;
 
 pub const BPM: f32 = 200.0;
 pub const BREAK_AFTER_EACH_NOTE_IN_QUARTER_NOTES: f32 = 0.25;
+
+pub const NUM_NOTES_NO_ALLOC: usize = 32;
 
 pub enum Length {
     Half,
@@ -48,42 +53,51 @@ pub struct Note {
     pub length: Length,
 }
 
-pub struct Melody<const U: usize> {
-    notes: [Note; U],
+pub struct Melody {
+    notes: SmallVec<[Note; NUM_NOTES_NO_ALLOC]>,
 }
 
-impl<const U: usize> Melody<U> {
+impl Melody {
     pub fn iter(&self) -> impl Iterator<Item = &Note> {
         self.notes.iter()
     }
 }
 
-macro_rules! count {
-    () => (0usize);
-    ( $x:tt $($xs:tt)* ) => (1usize + count!($($xs)*));
-}
-
 macro_rules! make_melody {
-    ($name: ident, [$( $note: ident, $length: literal),* $(,)?]) => {
-        pub fn $name() -> Melody<{ count!($($note)*) }> {
+    ($name: ident, [$(( $note: ident, $length: literal)),* $(,)?]) => {
+        pub fn $name() -> Melody {
             Melody {
-                notes: [
+                notes: smallvec![
                     $(
                         Note {
                             freq: Frequency::$note,
                             length: Length::from_num($length),
                         }
                     ),*
-                ],
+                ]
             }
         }
     }
 }
 
+#[rustfmt::skip]
 make_melody!(
     beethoven_9,
     [
-        E4, 4, E4, 4, F4, 4, G4, 4, G4, 4, F4, 4, E4, 4, D4, 4, C4, 4, C4, 4, D4, 4, E4, 4, E4, 2,
-        C4, 8, C4, 2
+        (E4, 4),
+        (E4, 4),
+        (F4, 4),
+        (G4, 4),
+        (G4, 4),
+        (F4, 4),
+        (E4, 4),
+        (D4, 4),
+        (C4, 4),
+        (C4, 4),
+        (D4, 4),
+        (E4, 4),
+        (E4, 2),
+        (C4, 8),
+        (C4, 2),
     ]
 );
