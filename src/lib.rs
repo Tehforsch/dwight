@@ -93,10 +93,10 @@ impl Machine {
     pub fn play_melody(&mut self, melody: &Melody) {
         let mut offset = 0;
         for note in melody.notes.iter() {
-            self.queue_action(offset, Action::PlayFrequency(note.freq.clone()));
+            self.queue_action(offset, Action::SetSpeakerFrequency(note.freq.clone()));
             self.queue_action(
                 offset + note.note_length,
-                Action::PlayFrequency(Frequency::Silence),
+                Action::SetSpeakerFrequency(Frequency::Silence),
             );
             offset += note.total_length();
         }
@@ -104,6 +104,10 @@ impl Machine {
 
     pub fn set_relay_state(&mut self, state: RelayState) {
         self.queue_action(0, Action::SetRelayState(state));
+    }
+
+    pub fn set_speaker_frequency(&mut self, freq: Frequency) {
+        self.queue_action(0, Action::SetSpeakerFrequency(freq));
     }
 }
 

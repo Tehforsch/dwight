@@ -129,14 +129,14 @@ impl State {
 pub enum Action {
     SetLedState(Led, LedState),
     SetRelayState(RelayState),
-    PlayFrequency(Frequency),
+    SetSpeakerFrequency(Frequency),
 }
 
 pub trait HardwareInterface {
     fn get_switch_state(&mut self, switch: Switch) -> SwitchState;
     fn set_led_state(&mut self, led: Led, led_state: LedState);
     fn set_relay_state(&mut self, relay_state: RelayState);
-    fn play_frequency(&mut self, frequency: &Frequency);
+    fn set_speaker_frequency(&mut self, frequency: &Frequency);
     fn wait(&mut self, delay_ms: f32);
     fn get_elapsed_time_ms(&mut self) -> Time;
 
@@ -144,7 +144,7 @@ pub trait HardwareInterface {
         match action {
             Action::SetLedState(led, state) => self.set_led_state(led, state),
             Action::SetRelayState(state) => self.set_relay_state(state),
-            Action::PlayFrequency(freq) => self.play_frequency(&freq),
+            Action::SetSpeakerFrequency(freq) => self.set_speaker_frequency(&freq),
         }
     }
 

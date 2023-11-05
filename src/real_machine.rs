@@ -140,7 +140,7 @@ impl HardwareInterface for Dwight {
         .unwrap();
     }
 
-    fn play_frequency(&mut self, freq: &Frequency) {
+    fn set_speaker_frequency(&mut self, freq: &Frequency) {
         if let Frequency::Some(freq) = freq {
             let top = (XTAL_FREQ_HZ as f32 / (DIVIDER as f32 * 0.5) / freq) as u16;
             self.pwm.channel_b.set_duty(top / 2);

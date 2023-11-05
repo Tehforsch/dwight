@@ -79,7 +79,7 @@ impl HardwareInterface for TestDwight {
         dbg!(relay_state);
     }
 
-    fn play_frequency(&mut self, frequency: &Frequency) {
+    fn set_speaker_frequency(&mut self, frequency: &Frequency) {
         dbg!(frequency);
     }
 
