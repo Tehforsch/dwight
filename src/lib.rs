@@ -4,6 +4,7 @@ pub mod melody;
 
 extern crate alloc;
 
+use alloc::vec;
 use alloc::vec::Vec;
 
 use hardware_interface::Frequency;
@@ -106,8 +107,8 @@ impl<H: HardwareInterface, P: Program> Machine<H, P> {
         loop {
             self.time = self.interface.get_elapsed_time_ms();
             state = self.interface.update_state(state);
-            let action = self.program.update(&state);
-            if let Some(action) = action {
+            let actions = self.program.update(&state);
+            for action in actions {
                 self.add(action);
             }
             self.act();
@@ -116,29 +117,28 @@ impl<H: HardwareInterface, P: Program> Machine<H, P> {
 }
 
 trait Program {
-    fn update(&mut self, state: &State) -> Option<Action>;
+    fn update(&mut self, state: &State) -> Vec<Action>;
 }
 
 struct SimplePouring;
 
 impl Program for SimplePouring {
-    fn update(&mut self, state: &State) -> Option<Action> {
+    fn update(&mut self, state: &State) -> Vec<Action> {
         for num in 0..10 {
             if state.just_pressed(Switch::number(num)) {
-                return Some(Action::PlayNote(Note {
+                return vec![Action::PlayNote(Note {
                     freq: Frequency::A4,
                     length: Length::Quarter,
-                }));
-                // return Some(Action::Pour(num));
+                })];
             }
         }
         if state.just_pressed(Switch::Left) {
-            return Some(Action::PlayNote(Note {
+            return vec![Action::PlayNote(Note {
                 freq: Frequency::A4,
                 length: Length::Quarter,
-            }));
+            })];
         }
-        None
+        vec![]
     }
 }
 
