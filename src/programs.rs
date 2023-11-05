@@ -8,6 +8,7 @@ use crate::hardware_interface::Switch;
 use crate::melody::Melody;
 use crate::melody::BEETHOVEN_5;
 use crate::melody::BEETHOVEN_9;
+use crate::melody::CHROMATIC_SCALE;
 use crate::melody::PROGRAM_SWITCHING;
 use crate::Duration;
 use crate::Machine;
@@ -22,8 +23,10 @@ impl Program for SimplePouring {
     fn update(&mut self, machine: &mut Machine, state: &State) {
         for switch in state.iter_just_pressed() {
             if let Some(num) = switch.get_num() {
-                machine.play_melody(&BEETHOVEN_9);
+                machine.play_melody(&CHROMATIC_SCALE[..num]);
                 machine.pour(num);
+                machine.wait_for_all_actions();
+                return;
             }
         }
     }

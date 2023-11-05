@@ -127,3 +127,23 @@ make_melody!(
         (G4, 16),
     ]
 );
+
+#[rustfmt::skip]
+make_melody!(
+    CHROMATIC_SCALE,
+    100.0,
+    [
+        (C4, 8),
+        (C_SHARP_4, 8),
+        (D4, 8),
+        (D_SHARP_4, 8),
+        (E4, 8),
+        (F4, 8),
+        (F_SHARP_4, 8),
+        (G4, 8),
+        (G_SHARP_4, 8),
+        (A4, 8),
+        (A_SHARP_4, 8),
+        (B4, 8),
+    ]
+);

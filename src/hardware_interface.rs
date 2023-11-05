@@ -30,11 +30,16 @@ pub enum Frequency {
 
 impl Frequency {
     pub const C4: Frequency = Frequency::Some(261.63);
+    pub const C_SHARP_4: Frequency = Frequency::Some(277.18);
     pub const D4: Frequency = Frequency::Some(293.66);
+    pub const D_SHARP_4: Frequency = Frequency::Some(311.13);
     pub const E4: Frequency = Frequency::Some(329.63);
     pub const F4: Frequency = Frequency::Some(349.23);
+    pub const F_SHARP_4: Frequency = Frequency::Some(369.99);
     pub const G4: Frequency = Frequency::Some(392.00);
+    pub const G_SHARP_4: Frequency = Frequency::Some(415.30);
     pub const A4: Frequency = Frequency::Some(440.00);
+    pub const A_SHARP_4: Frequency = Frequency::Some(466.16);
     pub const B4: Frequency = Frequency::Some(493.88);
     pub const BREAK: Frequency = Frequency::Silence;
 }
