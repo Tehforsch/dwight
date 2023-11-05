@@ -29,7 +29,7 @@ pub type Duration = u32;
 enum Action {
     Pour(usize),
     FlashLed(Led, Duration),
-    Play(&'static Melody),
+    PlayMelody(&'static Melody),
 }
 
 #[derive(Debug)]
@@ -62,6 +62,7 @@ impl<H: HardwareInterface, P: Program> Machine<H, P> {
     }
 
     fn add(&mut self, action: Action) {
+        use HardwareAction::*;
         let mut make_action_in_ms_from_now = |ms: Duration, action: HardwareAction| {
             self.actions.push(TimedHardwareAction {
                 timing_ms: self.time + ms,
@@ -70,29 +71,20 @@ impl<H: HardwareInterface, P: Program> Machine<H, P> {
         };
         match action {
             Action::Pour(num) => {
-                make_action_in_ms_from_now(0, HardwareAction::SetRelayState(RelayState::On));
-                make_action_in_ms_from_now(
-                    get_relay_timing_ms(num),
-                    HardwareAction::SetRelayState(RelayState::On),
-                );
+                make_action_in_ms_from_now(0, SetRelayState(RelayState::On));
+                make_action_in_ms_from_now(get_relay_timing_ms(num), SetRelayState(RelayState::On));
             }
             Action::FlashLed(led, duration) => {
-                make_action_in_ms_from_now(0, HardwareAction::SetLedState(led, LedState::On));
-                make_action_in_ms_from_now(
-                    duration,
-                    HardwareAction::SetLedState(led, LedState::On),
-                );
+                make_action_in_ms_from_now(0, SetLedState(led, LedState::On));
+                make_action_in_ms_from_now(duration, SetLedState(led, LedState::On));
             }
-            Action::Play(melody) => {
+            Action::PlayMelody(melody) => {
                 let mut offset = 0;
                 for note in melody.notes.iter() {
-                    make_action_in_ms_from_now(
-                        offset,
-                        HardwareAction::PlayFrequency(note.freq.clone()),
-                    );
+                    make_action_in_ms_from_now(offset, PlayFrequency(note.freq.clone()));
                     make_action_in_ms_from_now(
                         offset + note.note_length,
-                        HardwareAction::PlayFrequency(Frequency::Silence),
+                        PlayFrequency(Frequency::Silence),
                     );
                     offset += note.total_length();
                 }
@@ -134,7 +126,7 @@ impl Program for SimplePouring {
     fn get_new_actions(&mut self, state: &State) -> Vec<Action> {
         for num in 0..10 {
             if state.just_pressed(Switch::number(num)) {
-                return vec![Action::Play(&BEETHOVEN_9)];
+                return vec![Action::PlayMelody(&BEETHOVEN_9)];
             }
         }
         vec![]
