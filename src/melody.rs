@@ -130,6 +130,30 @@ make_melody!(
 
 #[rustfmt::skip]
 make_melody!(
+    CONFIRM_SELECTION,
+    200.0,
+    [
+        (C4, 16),
+        (G4, 4),
+    ]
+);
+
+#[rustfmt::skip]
+make_melody!(
+    RUSSIAN_ROULETTE_PLAYER_SELECTED,
+    200.0,
+    [
+        (C4, 8),
+        (F_SHARP_4, 8),
+        (C4, 8),
+        (F_SHARP_4, 8),
+        (C4, 8),
+        (F_SHARP_4, 8),
+    ]
+);
+
+#[rustfmt::skip]
+make_melody!(
     CHROMATIC_SCALE,
     100.0,
     [

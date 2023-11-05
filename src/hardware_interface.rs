@@ -133,9 +133,7 @@ impl State {
             previous: self.current,
         }
     }
-}
 
-impl State {
     pub fn just_pressed(&self, switch: Switch) -> bool {
         self.current[switch].is_pressed() && !self.previous[switch].is_pressed()
     }
@@ -156,6 +154,20 @@ impl State {
             .iter()
             .map(|(switch, _)| switch)
             .filter(|switch| self.pressed(*switch))
+    }
+
+    pub fn anything_just_pressed(&self) -> bool {
+        self.iter_just_pressed().count() > 0
+    }
+
+    pub fn anything_pressed(&self) -> bool {
+        self.iter_pressed().count() > 0
+    }
+
+    pub fn lowest_pressed_number_key(&self) -> Option<usize> {
+        self.iter_just_pressed()
+            .filter_map(|switch| switch.get_num())
+            .next()
     }
 }
 
