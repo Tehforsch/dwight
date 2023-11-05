@@ -22,11 +22,12 @@ pub struct ContinuousPouring;
 
 impl Program for ContinuousPouring {
     fn update(&mut self, machine: &mut Machine, state: &State) {
-        if state.iter_just_pressed().count() > 0 {
+        if state.iter_pressed().count() > 0 {
             machine.set_relay_state(RelayState::On);
             machine.set_speaker_frequency(Frequency::Some(400.0));
         } else {
             machine.set_relay_state(RelayState::Off);
+            machine.set_speaker_frequency(Frequency::Silence);
         }
     }
 }

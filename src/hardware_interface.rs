@@ -117,11 +117,22 @@ impl State {
         self.current[switch].is_pressed() && !self.previous[switch].is_pressed()
     }
 
+    pub fn pressed(&self, switch: Switch) -> bool {
+        self.current[switch].is_pressed()
+    }
+
     pub fn iter_just_pressed(&self) -> impl Iterator<Item = Switch> + '_ {
         self.current
             .iter()
             .map(|(switch, _)| switch)
             .filter(|switch| self.just_pressed(*switch))
+    }
+
+    pub fn iter_pressed(&self) -> impl Iterator<Item = Switch> + '_ {
+        self.current
+            .iter()
+            .map(|(switch, _)| switch)
+            .filter(|switch| self.pressed(*switch))
     }
 }
 

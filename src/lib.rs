@@ -16,6 +16,7 @@ use hardware_interface::LedState;
 use hardware_interface::RelayState;
 use hardware_interface::State;
 use melody::Melody;
+use programs::ContinuousPouring;
 use programs::Program;
 use programs::SimplePouring;
 
@@ -112,5 +113,5 @@ impl Machine {
 }
 
 pub fn main_loop(interface: impl HardwareInterface) -> ! {
-    Machine::new().run(interface, SimplePouring)
+    Machine::new().run(interface, ContinuousPouring)
 }
