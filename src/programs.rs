@@ -1,5 +1,6 @@
 use alloc::boxed::Box;
 
+use defmt::info;
 use rand::prelude::*;
 use rand::rngs::SmallRng;
 use rand::SeedableRng;
@@ -27,6 +28,7 @@ const BASE_PROBABILITY_RUSSIAN_ROULETTE: f64 = 0.5;
 
 pub trait Program {
     fn update(&mut self, machine: &mut Machine, state: &State);
+    fn cleanup_before_switch(&mut self, _machine: &mut Machine) {}
 }
 
 pub struct SimplePouring;
@@ -54,6 +56,11 @@ impl Program for ContinuousPouring {
             machine.set_relay_state(RelayState::Off);
             machine.set_speaker_frequency(Frequency::Silence);
         }
+    }
+
+    fn cleanup_before_switch(&mut self, machine: &mut Machine) {
+        machine.set_relay_state(RelayState::Off);
+        machine.set_speaker_frequency(Frequency::Silence);
     }
 }
 
@@ -140,7 +147,7 @@ impl Default for ProgramSwitching {
     fn default() -> Self {
         Self {
             in_selection_mode: false,
-            program: Box::new(SimplePouring),
+            program: Box::new(ContinuousPouring),
         }
     }
 }
@@ -158,6 +165,7 @@ impl Program for ProgramSwitching {
             }
         } else {
             if state.pressed(Switch::Left) && state.pressed(Switch::Right) {
+                self.program.cleanup_before_switch(machine);
                 machine.flash_led(Led::Left, PROGRAM_SWITCH_LED_FLASH_DURATION_MS);
                 machine.flash_led(Led::Right, PROGRAM_SWITCH_LED_FLASH_DURATION_MS);
                 machine.play_melody(PROGRAM_SWITCHING);
