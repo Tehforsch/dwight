@@ -73,4 +73,4 @@ path = "src/test_machine.rs"
 
 [[bin]]
 name = "real_machine"
-path = "src/real_machine.rs"
+path = "src/real_machine/mod.rs"
