@@ -9,6 +9,7 @@ use bsp::hal::clocks::Clock;
 use bsp::hal::pac;
 use bsp::hal::pwm::FreeRunning;
 use bsp::hal::pwm::Pwm0;
+use bsp::hal::pwm::Pwm7;
 use bsp::hal::pwm::Slice;
 use bsp::hal::sio::Sio;
 use bsp::hal::timer::Instant;
@@ -42,11 +43,15 @@ static HEAP: Heap = Heap::empty();
 /// if your board has a different frequency
 pub const XTAL_FREQ_HZ: u32 = 12_000_000u32;
 
-const DIVIDER: u8 = 80;
+const AUDIO_PWM_DIVIDER: u8 = 80;
+
+/// Value from the Raspberry Pi Pico hal pwm_blink template.
+pub const DEFAULT_LED_TOP: f32 = 25000.0;
 
 pub struct Dwight {
     pins: DwightPins,
-    pwm: Slice<Pwm0, FreeRunning>,
+    audio_pwm: Slice<Pwm0, FreeRunning>,
+    led_pwm: Slice<Pwm7, FreeRunning>,
     delay: Delay,
     timer: Timer,
     start: Instant,
@@ -82,21 +87,103 @@ impl Dwight {
         );
         let mut pins = DwightPins::new(pins);
 
-        let mut pwm = hal::pwm::Slices::new(pac.PWM, &mut pac.RESETS).pwm0;
-        pwm.set_ph_correct();
-        pwm.enable();
+        let pwm_slices = hal::pwm::Slices::new(pac.PWM, &mut pac.RESETS);
+        let mut audio_pwm = pwm_slices.pwm0;
+        audio_pwm.set_ph_correct();
+        audio_pwm.enable();
+        audio_pwm.channel_b.output_to(pins.speaker_pin());
+        audio_pwm.set_div_int(AUDIO_PWM_DIVIDER);
 
-        pwm.channel_b.output_to(pins.speaker_pin());
-        pwm.set_div_int(DIVIDER);
+        let mut led_pwm = pwm_slices.pwm7;
+        led_pwm.set_ph_correct();
+        led_pwm.enable();
+        let (left_led, right_led) = pins.led_pins();
+        led_pwm.channel_a.output_to(left_led);
+        led_pwm.channel_b.output_to(right_led);
+        led_pwm.set_top(DEFAULT_LED_TOP as u16);
+
         let start = timer.get_counter();
         Dwight {
             pins,
-            pwm,
+            audio_pwm,
+            led_pwm,
             delay,
             timer,
             start,
         }
     }
+}
+
+fn brightness_to_voltage(brightness: f32) -> f32 {
+    const NUM_ENTRIES: usize = 64;
+    let lookup: [f32; NUM_ENTRIES] = [
+        0.0,
+        0.0009765625,
+        0.0009765625,
+        0.001953125,
+        0.001953125,
+        0.001953125,
+        0.001953125,
+        0.001953125,
+        0.0029296875,
+        0.0029296875,
+        0.0029296875,
+        0.00390625,
+        0.00390625,
+        0.0048828125,
+        0.0048828125,
+        0.005859375,
+        0.005859375,
+        0.0068359375,
+        0.0078125,
+        0.0087890625,
+        0.009765625,
+        0.0107421875,
+        0.01171875,
+        0.0126953125,
+        0.0146484375,
+        0.0166015625,
+        0.0185546875,
+        0.0205078125,
+        0.0224609375,
+        0.025390625,
+        0.0283203125,
+        0.03125,
+        0.03515625,
+        0.0390625,
+        0.04296875,
+        0.0478515625,
+        0.0537109375,
+        0.0595703125,
+        0.06640625,
+        0.07421875,
+        0.0830078125,
+        0.091796875,
+        0.1025390625,
+        0.1142578125,
+        0.1279296875,
+        0.142578125,
+        0.158203125,
+        0.1767578125,
+        0.197265625,
+        0.2197265625,
+        0.244140625,
+        0.2724609375,
+        0.3037109375,
+        0.337890625,
+        0.376953125,
+        0.419921875,
+        0.4677734375,
+        0.521484375,
+        0.5810546875,
+        0.6474609375,
+        0.7216796875,
+        0.8046875,
+        0.896484375,
+        0.9990234375,
+    ];
+    let index = ((brightness * NUM_ENTRIES as f32) as usize).clamp(0, NUM_ENTRIES - 1);
+    lookup[index]
 }
 
 impl HardwareInterface for Dwight {
@@ -124,13 +211,20 @@ impl HardwareInterface for Dwight {
     }
 
     fn set_led_state(&mut self, led: Led, led_state: LedState) {
-        match (led_state, led) {
-            (LedState::On, Led::Left) => self.pins.left_led.set_high(),
-            (LedState::On, Led::Right) => self.pins.right_led.set_high(),
-            (LedState::Off, Led::Left) => self.pins.left_led.set_low(),
-            (LedState::Off, Led::Right) => self.pins.right_led.set_low(),
-        }
-        .unwrap();
+        let brightness_factor = led_state.brightness;
+
+        let voltage_factor = brightness_to_voltage(brightness_factor);
+        match led {
+            Led::Left => self
+                .led_pwm
+                .channel_a
+                .set_duty((DEFAULT_LED_TOP * voltage_factor) as u16),
+
+            Led::Right => self
+                .led_pwm
+                .channel_b
+                .set_duty((DEFAULT_LED_TOP * voltage_factor) as u16),
+        };
     }
 
     fn set_relay_state(&mut self, relay_state: RelayState) {
@@ -143,11 +237,11 @@ impl HardwareInterface for Dwight {
 
     fn set_speaker_frequency(&mut self, freq: &Frequency) {
         if let Frequency::Some(freq) = freq {
-            let top = (XTAL_FREQ_HZ as f32 / (DIVIDER as f32 * 0.5) / freq) as u16;
-            self.pwm.channel_b.set_duty(top / 2);
-            self.pwm.set_top(top);
+            let top = (XTAL_FREQ_HZ as f32 / (AUDIO_PWM_DIVIDER as f32 * 0.5) / freq) as u16;
+            self.audio_pwm.channel_b.set_duty(top / 2);
+            self.audio_pwm.set_top(top);
         } else {
-            self.pwm.channel_b.set_duty(0);
+            self.audio_pwm.channel_b.set_duty(0);
         };
     }
 

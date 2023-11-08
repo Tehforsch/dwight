@@ -39,7 +39,7 @@ fn get_relay_timing_ms(num: usize) -> u32 {
 
 struct Machine {
     actions: Queue,
-    time: Time,
+    time_ms: Time,
     wait_for_all_actions: bool,
 }
 
@@ -47,14 +47,14 @@ impl Machine {
     fn new() -> Self {
         Self {
             actions: Queue::default(),
-            time: 0,
+            time_ms: 0,
             wait_for_all_actions: false,
         }
     }
 
     fn queue_action(&mut self, ms: Duration, action: Action) {
         self.actions.push(TimedAction {
-            timing_ms: self.time + ms,
+            timing_ms: self.time_ms + ms,
             action,
         })
     }
@@ -63,7 +63,7 @@ impl Machine {
         let (actions_to_perform, remaining_actions): (Queue, Queue) = self
             .actions
             .drain(..)
-            .partition(|action| action.timing_ms <= self.time);
+            .partition(|action| action.timing_ms <= self.time_ms);
         self.actions = remaining_actions;
         for action in actions_to_perform {
             interface.perform_action(action.action);
@@ -73,7 +73,7 @@ impl Machine {
     fn run(mut self, mut interface: impl HardwareInterface, mut program: impl Program) -> ! {
         let mut state = State::new();
         loop {
-            self.time = interface.get_elapsed_time_ms();
+            self.time_ms = interface.get_elapsed_time_ms();
             state = interface.update_state(state);
             if self.wait_for_all_actions {
                 self.wait_for_all_actions = !self.actions.is_empty();
@@ -99,8 +99,8 @@ impl Machine {
     }
 
     pub fn flash_led(&mut self, led: Led, duration: Duration) {
-        self.queue_action(0, Action::SetLedState(led, LedState::On));
-        self.queue_action(duration, Action::SetLedState(led, LedState::Off));
+        self.queue_action(0, Action::SetLedState(led, LedState::on()));
+        self.queue_action(duration, Action::SetLedState(led, LedState::off()));
     }
 
     pub fn play_melody(&mut self, melody: &Melody) {
@@ -125,6 +125,10 @@ impl Machine {
 
     pub fn set_speaker_frequency(&mut self, freq: Frequency) {
         self.queue_action(0, Action::SetSpeakerFrequency(freq));
+    }
+
+    pub fn set_led_state(&mut self, led: Led, state: LedState) {
+        self.queue_action(0, Action::SetLedState(led, state));
     }
 }
 

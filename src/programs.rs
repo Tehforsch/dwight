@@ -1,12 +1,12 @@
 use alloc::boxed::Box;
 
-use defmt::info;
 use rand::prelude::*;
 use rand::rngs::SmallRng;
 use rand::SeedableRng;
 
 use crate::hardware_interface::Frequency;
 use crate::hardware_interface::Led;
+use crate::hardware_interface::LedState;
 use crate::hardware_interface::RelayState;
 use crate::hardware_interface::State;
 use crate::hardware_interface::Switch;
@@ -102,7 +102,7 @@ impl Program for RussianRoulette {
                     machine.play_melody(CONFIRM_SELECTION);
                     machine.wait_for_all_actions();
                     self.num_players = Some(num);
-                    self.rng = Some(SmallRng::seed_from_u64(machine.time as u64));
+                    self.rng = Some(SmallRng::seed_from_u64(machine.time_ms as u64));
                 }
             }
         } else {
@@ -138,6 +138,29 @@ impl RussianRoulette {
     }
 }
 
+struct LedTest;
+
+impl Program for LedTest {
+    fn update(&mut self, machine: &mut Machine, _: &State) {
+        let freq_hz = 1.0;
+        let time_s = (machine.time_ms as f32) / 1000.0;
+        let cycles_float = time_s * freq_hz;
+        let cycles_int = cycles_float as usize;
+        let factor = cycles_float - cycles_int as f32;
+        machine.set_led_state(Led::Left, LedState { brightness: factor });
+        machine.set_led_state(
+            Led::Right,
+            LedState {
+                brightness: 1.0 - factor,
+            },
+        );
+    }
+
+    fn cleanup_before_switch(&mut self, machine: &mut Machine) {
+        machine.set_led_state(Led::Left, LedState { brightness: 0.0 });
+    }
+}
+
 pub struct ProgramSwitching {
     in_selection_mode: bool,
     program: Box<dyn Program>,
@@ -147,7 +170,7 @@ impl Default for ProgramSwitching {
     fn default() -> Self {
         Self {
             in_selection_mode: false,
-            program: Box::new(ContinuousPouring),
+            program: Box::new(LedTest),
         }
     }
 }
@@ -182,6 +205,7 @@ fn program_num(switch: Switch) -> Option<(&'static Melody, Box<dyn Program>)> {
         Switch::Number1 => Some((BEETHOVEN_5, Box::new(ContinuousPouring))),
         Switch::Number2 => Some((BEETHOVEN_9, Box::new(SimplePouring))),
         Switch::Number3 => Some((IN_PARIS, Box::new(RussianRoulette::default()))),
+        Switch::Number4 => Some((IN_PARIS, Box::new(LedTest))),
         _ => None,
     }
 }

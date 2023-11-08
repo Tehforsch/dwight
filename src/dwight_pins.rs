@@ -20,8 +20,8 @@ type RightSwitchPin = Pin<Gpio13, FunctionSioInput, PullUp>;
 
 type SpeakerPin = Pin<Gpio1, FunctionNull, PullDown>;
 type RelayPin = Pin<Gpio0, FunctionSioOutput, PullDown>;
-type LeftLedPin = Pin<Gpio14, FunctionSioOutput, PullDown>;
-type RightLedPin = Pin<Gpio15, FunctionSioOutput, PullDown>;
+type LeftLedPin = Pin<Gpio14, FunctionNull, PullDown>;
+type RightLedPin = Pin<Gpio15, FunctionNull, PullDown>;
 
 pub struct DwightPins {
     pub number_switches: [NumberSwitchPin; 10],
@@ -30,8 +30,8 @@ pub struct DwightPins {
 
     speaker_pin: Option<SpeakerPin>,
     pub relay_pin: RelayPin,
-    pub left_led: LeftLedPin,
-    pub right_led: RightLedPin,
+    pub left_led: Option<LeftLedPin>,
+    pub right_led: Option<RightLedPin>,
 }
 
 impl DwightPins {
@@ -54,12 +54,19 @@ impl DwightPins {
             right_switch: pins.gpio13.into_pull_up_input(),
             speaker_pin: Some(pins.gpio1),
             relay_pin: pins.gpio0.into_push_pull_output(),
-            left_led: pins.gpio14.into_push_pull_output(),
-            right_led: pins.gpio15.into_push_pull_output(),
+            left_led: Some(pins.gpio14),
+            right_led: Some(pins.gpio15),
         }
     }
 
     pub fn speaker_pin(&mut self) -> SpeakerPin {
         self.speaker_pin.take().unwrap()
+    }
+
+    pub fn led_pins(&mut self) -> (LeftLedPin, RightLedPin) {
+        (
+            self.left_led.take().unwrap(),
+            self.right_led.take().unwrap(),
+        )
     }
 }

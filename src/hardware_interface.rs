@@ -5,9 +5,17 @@ use crate::Duration;
 use crate::Time;
 
 #[derive(Debug)]
-pub enum LedState {
-    On,
-    Off,
+pub struct LedState {
+    pub brightness: f32,
+}
+impl LedState {
+    pub fn on() -> LedState {
+        Self { brightness: 0.0 }
+    }
+
+    pub fn off() -> LedState {
+        Self { brightness: 0.0 }
+    }
 }
 
 #[derive(Debug, Clone, Copy)]
