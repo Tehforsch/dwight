@@ -102,7 +102,7 @@ impl Program for RussianRoulette {
                     machine.play_melody(CONFIRM_SELECTION);
                     machine.wait_for_all_actions();
                     self.num_players = Some(num);
-                    self.rng = Some(SmallRng::seed_from_u64(machine.time_ms as u64));
+                    self.rng = Some(SmallRng::seed_from_u64(machine.time_ms() as u64));
                 }
             }
         } else {
@@ -143,7 +143,7 @@ struct LedTest;
 impl Program for LedTest {
     fn update(&mut self, machine: &mut Machine, _: &State) {
         let freq_hz = 1.0;
-        let time_s = (machine.time_ms as f32) / 1000.0;
+        let time_s = (machine.time_ms() as f32) / 1000.0;
         let cycles_float = time_s * freq_hz;
         let cycles_int = cycles_float as usize;
         let factor = cycles_float - cycles_int as f32;
