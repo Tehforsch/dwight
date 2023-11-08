@@ -2,7 +2,6 @@
 #![no_main]
 
 mod dwight_pins;
-mod led_brightness;
 
 use bsp::entry;
 use bsp::hal::clocks::init_clocks_and_plls;
@@ -34,7 +33,6 @@ use embedded_alloc::Heap;
 use embedded_hal::digital::v2::InputPin;
 use embedded_hal::digital::v2::OutputPin;
 use embedded_hal::PwmPin;
-use led_brightness::brightness_to_voltage;
 use panic_probe as _;
 use rp_pico as bsp;
 
@@ -186,6 +184,12 @@ impl HardwareInterface for Dwight {
             .unwrap()
             .to_millis() as Time
     }
+}
+
+pub fn brightness_to_voltage(brightness: f32) -> f32 {
+    // Empirically determined to look way better than
+    // any complex lookup table or logarithms.
+    brightness * brightness
 }
 
 fn init_allocator() {
