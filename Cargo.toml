@@ -67,10 +67,10 @@ lto = 'fat'
 opt-level = 3
 
 [[bin]]
-name = "test_machine"
-path = "src/test_machine.rs"
+name = "test_interface"
+path = "src/test_interface.rs"
 
 
 [[bin]]
-name = "real_machine"
-path = "src/real_machine/mod.rs"
+name = "hardware"
+path = "src/hardware/mod.rs"
