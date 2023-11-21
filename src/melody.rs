@@ -148,6 +148,36 @@ make_melody!(
 
 #[rustfmt::skip]
 make_melody!(
+    DUCKS,
+    200.0,
+    [
+        (C4, 8),
+        (D4, 8),
+        (E4, 8),
+        (F4, 8),
+        (G4, 4),
+        (G4, 4),
+    ]
+);
+
+#[rustfmt::skip]
+make_melody!(
+    JINGLE,
+    200.0,
+    [
+        (C4, 16),
+        (C4, 16),
+        (C4, 8),
+        (BREAK, 8),
+        (C4, 16),
+        (C4, 16),
+        (C4, 8),
+        (BREAK, 8),
+    ]
+);
+
+#[rustfmt::skip]
+make_melody!(
     PROGRAM_SWITCHING,
     300.0,
     [
