@@ -1,4 +1,5 @@
 use alloc::boxed::Box;
+use alloc::vec::Vec;
 
 use rand::prelude::*;
 use rand::rngs::SmallRng;
@@ -16,17 +17,24 @@ use crate::melody::CONFIRM_SELECTION;
 use crate::melody::ERROR;
 use crate::melody::IN_PARIS;
 use crate::melody::PROGRAM_SWITCHING;
+use crate::melody::REACTION_TESTER_WAIT_FOR_REACTION_MELODY;
 use crate::melody::RUSSIAN_ROULETTE_PLAYER_NOT_SELECTED;
 use crate::melody::RUSSIAN_ROULETTE_PLAYER_SELECTED;
 use crate::Duration;
 use crate::Machine;
+use crate::Time;
 
 const PROGRAM_SWITCH_LED_ON_DURATION_MS: Duration = 500;
 const PROGRAM_SWITCH_LED_TRANSITION_DURATION_MS: Duration = 500;
 
+const REACTION_TESTER_NUM_SHOTS: usize = 5;
+
 const MAX_SHOTS_RUSSIAN_ROULETTE: usize = 10;
 const MIN_SHOTS_RUSSIAN_ROULETTE: usize = 1;
 const BASE_PROBABILITY_RUSSIAN_ROULETTE: f64 = 0.5;
+
+const MIN_REACTION_DURATION_MS: u32 = 2000;
+const MAX_REACTION_DURATION_MS: u32 = 20000;
 
 pub trait Program {
     fn update(&mut self, machine: &mut Machine, state: &State);
@@ -132,6 +140,83 @@ impl RussianRoulette {
     }
 }
 
+enum ReactionTesterGameState {
+    WaitForStart(Time),
+    WaitForAllButtonPresses(Vec<bool>),
+    WaitForGlass,
+}
+
+struct ReactionTester {
+    num_players: usize,
+    state: ReactionTesterGameState,
+    rng: SmallRng,
+}
+
+fn get_wait_for_start_state_with_random_timing(
+    machine: &Machine,
+    rng: &mut SmallRng,
+) -> ReactionTesterGameState {
+    let time = machine.time_ms();
+    let duration = rng.gen_range(MIN_REACTION_DURATION_MS..MAX_REACTION_DURATION_MS);
+    ReactionTesterGameState::WaitForStart(time + duration)
+}
+
+impl ReactionTester {
+    fn new(machine: &Machine) -> Self {
+        let mut rng = SmallRng::seed_from_u64(machine.time_ms() as u64);
+        let state = get_wait_for_start_state_with_random_timing(machine, &mut rng);
+        Self {
+            num_players: machine.config().num_players,
+            rng,
+            state,
+        }
+    }
+
+    fn wait_for_start(&mut self, machine: &mut Machine, timing: Time) {
+        let current_time = machine.time_ms();
+        if current_time > timing {
+            self.state = ReactionTesterGameState::WaitForAllButtonPresses(
+                (0..self.num_players).map(|_| false).collect(),
+            );
+            machine.play_melody(REACTION_TESTER_WAIT_FOR_REACTION_MELODY);
+        }
+    }
+
+    fn wait_for_glass(&mut self, machine: &mut Machine, state: &State) {
+        if state.anything_just_pressed() {
+            let num_shots = REACTION_TESTER_NUM_SHOTS;
+            machine.pour_with_melody(num_shots);
+            machine.wait_for_all_actions();
+            self.state = get_wait_for_start_state_with_random_timing(machine, &mut self.rng);
+        }
+    }
+}
+
+fn wait_for_button_presses(state: &State, players_have_pressed: &mut [bool]) -> bool {
+    for button in state.iter_pressed() {
+        if let Some(num) = button.get_num() {
+            if players_have_pressed.len() > num {
+                players_have_pressed[num] = true;
+            }
+        }
+    }
+    players_have_pressed.iter().all(|x| *x)
+}
+
+impl Program for ReactionTester {
+    fn update(&mut self, machine: &mut Machine, state: &State) {
+        match self.state {
+            ReactionTesterGameState::WaitForStart(time) => self.wait_for_start(machine, time),
+            ReactionTesterGameState::WaitForAllButtonPresses(ref mut presses) => {
+                if wait_for_button_presses(state, presses) {
+                    self.state = ReactionTesterGameState::WaitForGlass;
+                }
+            }
+            ReactionTesterGameState::WaitForGlass => self.wait_for_glass(machine, state),
+        }
+    }
+}
+
 struct ConfigurationProgram;
 
 impl Program for ConfigurationProgram {
@@ -217,6 +302,7 @@ fn program_num(switch: Switch, machine: &Machine) -> Option<(&'static Melody, Bo
         Switch::Number1 => Some((BEETHOVEN_5, Box::new(ContinuousPouring))),
         Switch::Number2 => Some((BEETHOVEN_9, Box::new(SimplePouring))),
         Switch::Number3 => Some((IN_PARIS, Box::new(RussianRoulette::new(machine)))),
+        Switch::Number4 => Some((IN_PARIS, Box::new(ReactionTester::new(machine)))),
         Switch::Number8 => Some((IN_PARIS, Box::new(LedTest))),
         Switch::Number9 => Some((IN_PARIS, Box::new(ConfigurationProgram))),
         _ => None,

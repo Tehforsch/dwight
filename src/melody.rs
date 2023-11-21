@@ -119,6 +119,15 @@ make_melody!(
 
 #[rustfmt::skip]
 make_melody!(
+    REACTION_TESTER_WAIT_FOR_REACTION_MELODY,
+    140.0,
+    [
+        (F4, 4),
+    ]
+);
+
+#[rustfmt::skip]
+make_melody!(
     IN_PARIS,
     140.0,
     [
