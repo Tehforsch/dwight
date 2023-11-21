@@ -190,6 +190,15 @@ make_melody!(
 
 #[rustfmt::skip]
 make_melody!(
+    RUSSIAN_ROULETTE_PLAYER_NOT_SELECTED,
+    200.0,
+    [
+        (C4, 4),
+    ]
+);
+
+#[rustfmt::skip]
+make_melody!(
     CHROMATIC_SCALE,
     100.0,
     [

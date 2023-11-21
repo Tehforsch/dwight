@@ -17,6 +17,19 @@ use crate::Duration;
 use crate::Time;
 
 pub const NUM_MS_PER_SHOT: Time = 100;
+const DEFAULT_NUM_PLAYERS: usize = 2;
+
+pub struct Configuration {
+    pub num_players: usize,
+}
+
+impl Default for Configuration {
+    fn default() -> Self {
+        Self {
+            num_players: DEFAULT_NUM_PLAYERS,
+        }
+    }
+}
 
 #[derive(Debug)]
 enum Action {
@@ -98,6 +111,7 @@ pub struct Machine {
     wait_for_all_actions: bool,
     left_led_transition: StartedTransition,
     right_led_transition: StartedTransition,
+    config: Configuration,
 }
 
 impl Machine {
@@ -108,7 +122,12 @@ impl Machine {
             wait_for_all_actions: false,
             left_led_transition: StartedTransition::default(),
             right_led_transition: StartedTransition::default(),
+            config: Configuration::default(),
         }
+    }
+
+    pub fn config(&self) -> &Configuration {
+        &self.config
     }
 
     pub fn time_ms(&self) -> Time {
@@ -226,5 +245,9 @@ impl Machine {
     pub fn no_ongoing_led_transition(&self) -> bool {
         self.time_ms > self.left_led_transition.end_time()
             && self.time_ms > self.right_led_transition.end_time()
+    }
+
+    pub fn configure_num_players(&mut self, num: usize) {
+        self.config.num_players = num;
     }
 }

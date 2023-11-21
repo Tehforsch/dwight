@@ -16,6 +16,7 @@ use crate::melody::CONFIRM_SELECTION;
 use crate::melody::ERROR;
 use crate::melody::IN_PARIS;
 use crate::melody::PROGRAM_SWITCHING;
+use crate::melody::RUSSIAN_ROULETTE_PLAYER_NOT_SELECTED;
 use crate::melody::RUSSIAN_ROULETTE_PLAYER_SELECTED;
 use crate::Duration;
 use crate::Machine;
@@ -72,47 +73,36 @@ enum RussianRouletteGameState {
     AwaitingGlass,
 }
 
-#[derive(Default)]
 struct RussianRoulette {
-    num_players: Option<usize>,
+    num_players: usize,
     state: RussianRouletteGameState,
-    rng: Option<SmallRng>,
+    rng: SmallRng,
 }
 
 impl RussianRoulette {
+    fn new(machine: &Machine) -> Self {
+        Self {
+            num_players: machine.config().num_players,
+            rng: SmallRng::seed_from_u64(machine.time_ms() as u64),
+            state: RussianRouletteGameState::default(),
+        }
+    }
     fn randomly_select_player(&mut self) -> bool {
-        let probability = BASE_PROBABILITY_RUSSIAN_ROULETTE / self.num_players.unwrap() as f64;
-        self.rng.as_mut().unwrap().gen_bool(probability)
+        let probability = BASE_PROBABILITY_RUSSIAN_ROULETTE / self.num_players as f64;
+        self.rng.gen_bool(probability)
     }
 
     fn get_random_num_shots(&mut self) -> usize {
         self.rng
-            .as_mut()
-            .unwrap()
             .gen_range(MIN_SHOTS_RUSSIAN_ROULETTE..MAX_SHOTS_RUSSIAN_ROULETTE)
     }
 }
 
 impl Program for RussianRoulette {
     fn update(&mut self, machine: &mut Machine, state: &State) {
-        if self.num_players.is_none() {
-            if let Some(num) = state.lowest_pressed_number_key() {
-                if num == 0 {
-                    machine.play_melody(ERROR);
-                } else {
-                    machine.play_melody(CONFIRM_SELECTION);
-                    machine.wait_for_all_actions();
-                    self.num_players = Some(num);
-                    self.rng = Some(SmallRng::seed_from_u64(machine.time_ms() as u64));
-                }
-            }
-        } else {
-            match self.state {
-                RussianRouletteGameState::PlayerSelection => {
-                    self.test_player_selection(machine, state)
-                }
-                RussianRouletteGameState::AwaitingGlass => self.wait_for_glass(machine, state),
-            }
+        match self.state {
+            RussianRouletteGameState::PlayerSelection => self.test_player_selection(machine, state),
+            RussianRouletteGameState::AwaitingGlass => self.wait_for_glass(machine, state),
         }
     }
 }
@@ -125,6 +115,9 @@ impl RussianRoulette {
                 machine.play_melody(RUSSIAN_ROULETTE_PLAYER_SELECTED);
                 machine.wait_for_all_actions();
                 self.state = RussianRouletteGameState::AwaitingGlass;
+            } else {
+                machine.play_melody(RUSSIAN_ROULETTE_PLAYER_NOT_SELECTED);
+                machine.wait_for_all_actions();
             }
         }
     }
@@ -139,6 +132,22 @@ impl RussianRoulette {
     }
 }
 
+struct ConfigurationProgram;
+
+impl Program for ConfigurationProgram {
+    fn update(&mut self, machine: &mut Machine, state: &State) {
+        if let Some(num) = state.lowest_pressed_number_key() {
+            if num == 0 {
+                machine.play_melody(ERROR);
+            } else {
+                machine.play_melody(CONFIRM_SELECTION);
+                machine.wait_for_all_actions();
+                machine.configure_num_players(num);
+            }
+        }
+    }
+}
+
 struct LedTest;
 
 impl Program for LedTest {
@@ -148,6 +157,10 @@ impl Program for LedTest {
             machine.flash_led(Led::Right, 2000, 5000);
         }
     }
+}
+
+trait ConfigurableProgram: From<Self::ConfigProgram> {
+    type ConfigProgram: Program;
 }
 
 pub struct ProgramSwitching {
@@ -180,7 +193,7 @@ impl Program for ProgramSwitching {
                 );
             }
             for switch in state.iter_just_pressed() {
-                if let Some((melody, program)) = program_num(switch) {
+                if let Some((melody, program)) = program_num(switch, machine) {
                     self.program = program;
                     self.in_selection_mode = false;
                     machine.play_melody(melody);
@@ -199,12 +212,13 @@ impl Program for ProgramSwitching {
     }
 }
 
-fn program_num(switch: Switch) -> Option<(&'static Melody, Box<dyn Program>)> {
+fn program_num(switch: Switch, machine: &Machine) -> Option<(&'static Melody, Box<dyn Program>)> {
     match switch {
         Switch::Number1 => Some((BEETHOVEN_5, Box::new(ContinuousPouring))),
         Switch::Number2 => Some((BEETHOVEN_9, Box::new(SimplePouring))),
-        Switch::Number3 => Some((IN_PARIS, Box::new(RussianRoulette::default()))),
-        Switch::Number4 => Some((IN_PARIS, Box::new(LedTest))),
+        Switch::Number3 => Some((IN_PARIS, Box::new(RussianRoulette::new(machine)))),
+        Switch::Number8 => Some((IN_PARIS, Box::new(LedTest))),
+        Switch::Number9 => Some((IN_PARIS, Box::new(ConfigurationProgram))),
         _ => None,
     }
 }
