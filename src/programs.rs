@@ -6,7 +6,6 @@ use rand::SeedableRng;
 
 use crate::hardware_interface::Frequency;
 use crate::hardware_interface::Led;
-use crate::hardware_interface::LedState;
 use crate::hardware_interface::RelayState;
 use crate::hardware_interface::State;
 use crate::hardware_interface::Switch;
@@ -21,7 +20,9 @@ use crate::melody::RUSSIAN_ROULETTE_PLAYER_SELECTED;
 use crate::Duration;
 use crate::Machine;
 
-const PROGRAM_SWITCH_LED_FLASH_DURATION_MS: Duration = 500;
+const PROGRAM_SWITCH_LED_ON_DURATION_MS: Duration = 500;
+const PROGRAM_SWITCH_LED_TRANSITION_DURATION_MS: Duration = 500;
+
 const MAX_SHOTS_RUSSIAN_ROULETTE: usize = 10;
 const MIN_SHOTS_RUSSIAN_ROULETTE: usize = 1;
 const BASE_PROBABILITY_RUSSIAN_ROULETTE: f64 = 0.5;
@@ -142,22 +143,10 @@ struct LedTest;
 
 impl Program for LedTest {
     fn update(&mut self, machine: &mut Machine, _: &State) {
-        let freq_hz = 1.0;
-        let time_s = (machine.time_ms() as f32) / 1000.0;
-        let cycles_float = time_s * freq_hz;
-        let cycles_int = cycles_float as usize;
-        let factor = cycles_float - cycles_int as f32;
-        machine.set_led_state(Led::Left, LedState { brightness: factor });
-        machine.set_led_state(
-            Led::Right,
-            LedState {
-                brightness: 1.0 - factor,
-            },
-        );
-    }
-
-    fn cleanup_before_switch(&mut self, machine: &mut Machine) {
-        machine.set_led_state(Led::Left, LedState { brightness: 0.0 });
+        if machine.no_ongoing_led_transition() {
+            machine.flash_led(Led::Left, 2000, 5000);
+            machine.flash_led(Led::Right, 2000, 5000);
+        }
     }
 }
 
@@ -178,6 +167,18 @@ impl Default for ProgramSwitching {
 impl Program for ProgramSwitching {
     fn update(&mut self, machine: &mut Machine, state: &State) {
         if self.in_selection_mode {
+            if machine.no_ongoing_led_transition() {
+                machine.flash_led(
+                    Led::Left,
+                    PROGRAM_SWITCH_LED_TRANSITION_DURATION_MS,
+                    PROGRAM_SWITCH_LED_ON_DURATION_MS,
+                );
+                machine.flash_led(
+                    Led::Right,
+                    PROGRAM_SWITCH_LED_TRANSITION_DURATION_MS,
+                    PROGRAM_SWITCH_LED_ON_DURATION_MS,
+                );
+            }
             for switch in state.iter_just_pressed() {
                 if let Some((melody, program)) = program_num(switch) {
                     self.program = program;
@@ -189,8 +190,6 @@ impl Program for ProgramSwitching {
         } else {
             if state.pressed(Switch::Left) && state.pressed(Switch::Right) {
                 self.program.cleanup_before_switch(machine);
-                machine.flash_led(Led::Left, PROGRAM_SWITCH_LED_FLASH_DURATION_MS);
-                machine.flash_led(Led::Right, PROGRAM_SWITCH_LED_FLASH_DURATION_MS);
                 machine.play_melody(PROGRAM_SWITCHING);
                 self.in_selection_mode = true;
             } else {

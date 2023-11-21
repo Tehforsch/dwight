@@ -8,9 +8,10 @@ use crate::Time;
 pub struct LedState {
     pub brightness: f32,
 }
+
 impl LedState {
     pub fn on() -> LedState {
-        Self { brightness: 0.0 }
+        Self { brightness: 1.0 }
     }
 
     pub fn off() -> LedState {
@@ -180,13 +181,6 @@ impl State {
     }
 }
 
-#[derive(Debug)]
-pub enum Action {
-    SetLedState(Led, LedState),
-    SetRelayState(RelayState),
-    SetSpeakerFrequency(Frequency),
-}
-
 pub trait HardwareInterface {
     fn get_switch_state(&mut self, switch: Switch) -> SwitchState;
     fn set_led_state(&mut self, led: Led, led_state: LedState);
@@ -194,14 +188,6 @@ pub trait HardwareInterface {
     fn set_speaker_frequency(&mut self, frequency: &Frequency);
     fn wait_ms(&mut self, delay_ms: Duration);
     fn get_elapsed_time_ms(&mut self) -> Time;
-
-    fn perform_action(&mut self, action: Action) {
-        match action {
-            Action::SetLedState(led, state) => self.set_led_state(led, state),
-            Action::SetRelayState(state) => self.set_relay_state(state),
-            Action::SetSpeakerFrequency(freq) => self.set_speaker_frequency(&freq),
-        }
-    }
 
     fn update_state(&mut self, previous: State) -> State {
         previous.update(EnumMap::from_fn(|switch| self.get_switch_state(switch)))

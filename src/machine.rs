@@ -1,6 +1,5 @@
 use alloc::vec::Vec;
 
-use hardware_interface::Action;
 use hardware_interface::Frequency;
 use hardware_interface::HardwareInterface;
 use hardware_interface::Led;
@@ -20,12 +19,74 @@ use crate::Time;
 pub const NUM_MS_PER_SHOT: Time = 100;
 
 #[derive(Debug)]
+enum Action {
+    SetLedTransition(Led, Transition),
+    SetRelayState(RelayState),
+    SetSpeakerFrequency(Frequency),
+}
+
+#[derive(Debug)]
 struct TimedAction {
     timing_ms: Time,
     action: Action,
 }
 
 type Queue = Vec<TimedAction>;
+
+#[derive(Default, Debug)]
+struct Transition {
+    start_val: f32,
+    end_val: f32,
+    duration: Time,
+}
+
+impl Transition {
+    fn get_current_val(&self, time_elapsed: Time) -> LedState {
+        let frac = if time_elapsed <= 0 {
+            0.0
+        } else if time_elapsed >= self.duration {
+            1.0
+        } else {
+            time_elapsed as f32 / self.duration as f32
+        };
+        LedState {
+            brightness: self.start_val + (self.end_val - self.start_val) * frac,
+        }
+    }
+
+    pub fn on_within(duration: Duration) -> Self {
+        Self {
+            start_val: 0.0,
+            end_val: 1.0,
+            duration,
+        }
+    }
+
+    pub fn off_within(duration: Duration) -> Self {
+        Self {
+            start_val: 1.0,
+            end_val: 0.0,
+            duration,
+        }
+    }
+}
+
+#[derive(Default, Debug)]
+struct StartedTransition {
+    start_time_ms: Time,
+    transition: Transition,
+}
+
+impl StartedTransition {
+    fn get_current_val(&self, time_ms: Time) -> LedState {
+        self.transition
+            .get_current_val(time_ms - self.start_time_ms)
+    }
+
+    fn end_time(&self) -> Time {
+        self.transition.duration + self.start_time_ms
+    }
+}
 
 fn get_relay_timing_ms(num: usize) -> u32 {
     (num as u32) * NUM_MS_PER_SHOT
@@ -35,6 +96,8 @@ pub struct Machine {
     actions: Queue,
     time_ms: Time,
     wait_for_all_actions: bool,
+    left_led_transition: StartedTransition,
+    right_led_transition: StartedTransition,
 }
 
 impl Machine {
@@ -43,6 +106,8 @@ impl Machine {
             actions: Queue::default(),
             time_ms: 0,
             wait_for_all_actions: false,
+            left_led_transition: StartedTransition::default(),
+            right_led_transition: StartedTransition::default(),
         }
     }
 
@@ -64,8 +129,34 @@ impl Machine {
             .partition(|action| action.timing_ms <= self.time_ms);
         self.actions = remaining_actions;
         for action in actions_to_perform {
-            interface.perform_action(action.action);
+            match action.action {
+                Action::SetLedTransition(Led::Left, transition) => {
+                    self.left_led_transition = StartedTransition {
+                        transition,
+                        start_time_ms: action.timing_ms,
+                    }
+                }
+                Action::SetLedTransition(Led::Right, transition) => {
+                    self.right_led_transition = StartedTransition {
+                        transition,
+                        start_time_ms: action.timing_ms,
+                    }
+                }
+                Action::SetRelayState(state) => interface.set_relay_state(state),
+                Action::SetSpeakerFrequency(freq) => interface.set_speaker_frequency(&freq),
+            }
         }
+    }
+
+    fn update_leds(&mut self, interface: &mut impl HardwareInterface) {
+        interface.set_led_state(
+            Led::Left,
+            self.left_led_transition.get_current_val(self.time_ms),
+        );
+        interface.set_led_state(
+            Led::Right,
+            self.right_led_transition.get_current_val(self.time_ms),
+        );
     }
 
     pub fn run(mut self, mut interface: impl HardwareInterface, mut program: impl Program) -> ! {
@@ -79,6 +170,7 @@ impl Machine {
                 program.update(&mut self, &state);
             }
             self.perform_pending_actions(&mut interface);
+            self.update_leds(&mut interface);
         }
     }
 
@@ -96,9 +188,15 @@ impl Machine {
         self.play_melody(&CHROMATIC_SCALE[..num_notes_to_play]);
     }
 
-    pub fn flash_led(&mut self, led: Led, duration: Duration) {
-        self.queue_action(0, Action::SetLedState(led, LedState::on()));
-        self.queue_action(duration, Action::SetLedState(led, LedState::off()));
+    pub fn flash_led(&mut self, led: Led, transition_duration: Duration, on_duration: Duration) {
+        self.queue_action(
+            0,
+            Action::SetLedTransition(led, Transition::on_within(transition_duration)),
+        );
+        self.queue_action(
+            transition_duration + on_duration,
+            Action::SetLedTransition(led, Transition::off_within(transition_duration)),
+        );
     }
 
     pub fn play_melody(&mut self, melody: &Melody) {
@@ -125,7 +223,8 @@ impl Machine {
         self.queue_action(0, Action::SetSpeakerFrequency(freq));
     }
 
-    pub fn set_led_state(&mut self, led: Led, state: LedState) {
-        self.queue_action(0, Action::SetLedState(led, state));
+    pub fn no_ongoing_led_transition(&self) -> bool {
+        self.time_ms > self.left_led_transition.end_time()
+            && self.time_ms > self.right_led_transition.end_time()
     }
 }
