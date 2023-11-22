@@ -10,6 +10,7 @@ use melody::Melody;
 use melody::CHROMATIC_SCALE;
 use programs::Program;
 
+use crate::configuration::Configuration;
 use crate::hardware_interface;
 use crate::melody;
 use crate::melody::Note;
@@ -17,21 +18,7 @@ use crate::programs;
 use crate::Duration;
 use crate::Time;
 
-pub const NUM_MS_PER_SHOT: Time = 700;
-pub const DELAY_AFTER_SHOT: Time = 300;
-const DEFAULT_NUM_PLAYERS: usize = 2;
-
-pub struct Configuration {
-    pub num_players: usize,
-}
-
-impl Default for Configuration {
-    fn default() -> Self {
-        Self {
-            num_players: DEFAULT_NUM_PLAYERS,
-        }
-    }
-}
+const DELAY_AFTER_SHOT: Time = 300;
 
 #[derive(Debug)]
 enum Action {
@@ -194,15 +181,15 @@ impl Machine {
     pub fn pour(&mut self, offset: Duration) {
         self.queue_action(offset, Action::SetRelayState(RelayState::On));
         self.queue_action(
-            offset + NUM_MS_PER_SHOT,
+            offset + self.config.shot_duration,
             Action::SetRelayState(RelayState::Off),
         );
     }
 
     pub fn pour_with_melody(&mut self, num: usize) {
-        let duration_per_shot = NUM_MS_PER_SHOT + DELAY_AFTER_SHOT;
+        let duration_per_shot = self.config.shot_duration + DELAY_AFTER_SHOT;
         for i in 0..num {
-            let note = i.min(CHROMATIC_SCALE.len());
+            let note = i.min(CHROMATIC_SCALE.len() - 1);
             let offset = duration_per_shot * i as u32;
             self.pour(offset);
             self.queue_note(&CHROMATIC_SCALE[note], offset);
@@ -260,7 +247,7 @@ impl Machine {
             .any(|action| matches!(action.action, Action::SetSpeakerFrequency(_)))
     }
 
-    pub fn configure_num_players(&mut self, num: usize) {
-        self.config.num_players = num;
+    pub fn get_config_mut(&mut self) -> &mut Configuration {
+        &mut self.config
     }
 }
