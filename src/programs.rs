@@ -258,8 +258,8 @@ pub struct ProgramSwitching {
 impl Default for ProgramSwitching {
     fn default() -> Self {
         Self {
-            in_selection_mode: false,
-            program: Box::new(LedTest),
+            in_selection_mode: true,
+            program: Box::new(ContinuousPouring),
         }
     }
 }
