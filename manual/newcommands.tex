@@ -1,0 +1,88 @@
+%%% Brackets etc.
+\newcommand{\bb}[1]{\left(#1\right)}                                        % (..)
+\newcommand{\bc}[1]{\left[#1\right]}                                        % [..]
+\newcommand{\bd}[1]{\left\langle#1\right\rangle}                            % <..>
+\newcommand{\bs}[1]{\left\{#1\right\}}                                      % {..}
+\newcommand{\abs}[1]{\left|#1\right|}                                       % |..|
+\newcommand{\abssq}[1]{\abs{#1}^2}                                          % |..|^2
+\newcommand{\comm}[2]{\left[#1, #2\right]}                                  % [.., ..]
+\newcommand{\anticomm}[2]{\left\{#1, #2\right\}}                            % {.., ..}
+\newcommand{\bra}[1]{\ensuremath{\left\langle#1\right|}\xspace}             % <...|
+\newcommand{\ket}[1]{\ensuremath{\left|#1\right\rangle}\xspace}             % |...>
+\newcommand{\braket}[2]{\left\langle#1\middle|#2\right\rangle}              % <...|...>
+\newcommand{\ketbra}[2]{\left|#1\middle\rangle\middle\langle#2\right|}      % |...><...|
+\newcommand{\braketop}[3]{\left\langle#1\middle|#2\middle|#3\right\rangle}  % <...|...|...>
+
+%%% Integrals, Differentials
+\newcommand{\diff}[1]{\ensuremath{\frac{\mathrm{d}}{\mathrm{d}#1}}}         % d/dx
+\newcommand{\sdiff}[1]{\ensuremath{\frac{\mathrm{d}^2}{\mathrm{d}#1^2}}}    % d^2/dx^2
+\newcommand{\dd}[2]{\ensuremath{\frac{\mathrm{d}#1}{\mathrm{d}#2}}}         % df/dx
+\newcommand{\sdd}[2]{\ensuremath{\frac{\mathrm{d}^2#1}{\mathrm{d}#2^2}}}    % d^2f/dx^2
+\newcommand{\pdiff}[1]{\ensuremath{\frac{\partial}{\partial#1}}}            % partial d/dx
+\newcommand{\spdiff}[1]{\ensuremath{\frac{\partial^2}{\partial#1^2}}}       % partial d^2/dx^2
+\newcommand{\pp}[2]{\ensuremath{\frac{\partial#1}{\partial#2}}}             % partial df/dx
+\newcommand{\spp}[2]{\ensuremath{\frac{\partial^2#1}{\partial#2^2}}}        % partial d^2f/dx^2
+
+\newcommand{\integral}[4]{\int_{#1}^{#2} #4 \mathrm{d}#3}                   % Integral with non-italic differential
+\newcommand{\infintegral}[2]{\int_{-\infty}^{\infty} #2 \mathrm{d}#1}       % Integral over entire R
+
+%%% Constants
+\newcommand{\kB}[0]{k_{\mathrm{B}}}                                         % Boltzmann factor
+
+%%% Figures (stolen)
+\newcommand{\figureDirectory}{../pics/}
+% \igopt[options]{file name}
+\newcommand{\igopt}[2]{\includegraphics[#1]{\figureDirectory#2}}
+% \ig[width in units of \textwidth]{file name}
+\newcommand{\ig}[2]{\igopt{width=#1\columnwidth}{#2}}
+% \figopt[width]{file name}{caption}{placement: h, t, ht, ..}
+\newcommand{\figopt}[4]{
+    \begin{figure}[#4]
+        \centering
+        \ig{#1}{#2}
+        \caption{#3}
+        \label{fig:#2}
+    \end{figure}
+}
+% \fig{width}{file name}{caption}
+\newcommand{\fig}[3]{
+    \figopt{#1}{#2}{#3}{htbp!}
+}
+\newcommand{\eref}[1]{Eq.~\ref{eq:#1}}
+\newcommand{\equref}[1]{Equation~\ref{eq:#1}}
+\newcommand{\fref}[1]{Fig.~\ref{fig:#1}}
+\newcommand{\figref}[1]{Figure~\ref{fig:#1}}
+\newcommand{\secref}[1]{Section~\ref{sec:#1}}
+\newcommand{\sref}[1]{\ref{sec:#1}}
+\newcommand{\stepref}[1]{Step~\ref{step:#1}}
+
+\newcommand{\todo}[1]{\textbf{TODO: #1}}
+
+\newcommand{\knusbar}[0]{\bar{k}_{\nu,\mathrm{s}}}
+\newcommand{\knus}[0]{k_{\nu,\mathrm{s}}}
+\newcommand{\knuabar}[0]{\bar{k}_{\nu,\mathrm{a}}}
+
+\newcommand{\Nrot}[0]{N_{\mathrm{rot}}}
+\newcommand{\Rst}[0]{R_{\mathrm{St}}}
+\newcommand{\trec}[0]{t_{\mathrm{rec}}}
+\newcommand{\direc}[0]{\bm{\Omega}}
+\newcommand{\nelectron}[0]{n_{\mathrm{e}}}
+\newcommand{\nH}[0]{n_{\mathrm{H}}}
+\newcommand{\alphaB}[0]{\alpha_{\mathrm{B}}}
+\newcommand{\Rstroemgren}[0]{R_{\mathrm{St}}}
+\newcommand{\cs}[0]{c_{\mathrm{s}}}
+\newcommand{\Rr}[0]{R_{\mathrm{r}}}
+\newcommand{\Rd}[0]{R_{\mathrm{d}}}
+\newcommand{\xH}[0]{x_{\mathrm{H}}}
+\newcommand{\xHP}[0]{x_{\mathrm{H+}}}
+\newcommand{\ndim}[0]{n_{\mathrm{dim}}}
+
+\newcommand{\nItPbc}[0]{n_{\mathrm{it, pbc}}}
+\newcommand{\nItScat}[0]{n_{\mathrm{it, scat}}}
+
+\newcommand{\nbase}[0]{n_{\mathrm{base}}}
+\newcommand{\tbase}[0]{t_{\mathrm{base}}}
+\newcommand{\ttask}[0]{t_{\mathrm{task}}}
+\newcommand{\tideal}[0]{t_{\mathrm{ideal}}}
+\newcommand{\Sideal}[0]{S_{\mathrm{ideal}}}
+\newcommand{\sigmaS}[0]{\sigma_{\mathrm{s}}}

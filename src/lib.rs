@@ -1,4 +1,4 @@
-// #![no_std]
+#![no_std]
 #![feature(const_fn_floating_point_arithmetic)]
 
 extern crate alloc;

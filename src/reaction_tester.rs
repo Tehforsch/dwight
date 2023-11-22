@@ -22,9 +22,6 @@ use crate::Time;
 const MIN_REACTION_DURATION_MS: u32 = 5000;
 const MAX_REACTION_DURATION_MS: u32 = 15000;
 
-const NUM_SHOTS_SLOW_REACTION: usize = 5;
-const NUM_SHOTS_EARLY_START: usize = 10;
-
 const LED_ON_DURATION: Duration = 200;
 const LED_FLASH_DURATION: Duration = 500;
 
@@ -166,8 +163,8 @@ impl ReactionTester {
             unreachable!()
         };
         let num_shots = match reason {
-            Reason::SlowReaction => NUM_SHOTS_SLOW_REACTION,
-            Reason::EarlyStart(_) => NUM_SHOTS_EARLY_START,
+            Reason::SlowReaction => machine.config().reaction_num_shots_loser,
+            Reason::EarlyStart(_) => machine.config().reaction_num_shots_early_start,
         };
         let led = match team {
             Team::Left => Led::Left,

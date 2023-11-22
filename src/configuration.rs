@@ -19,6 +19,9 @@ const RUSSIAN_ROULETTE_DEFAULT_LOSS_PROBABILITY: f32 = 0.1;
 const RUSSIAN_ROULETTE_DEFAULT_MIN_NUM_SHOTS: usize = 4;
 const RUSSIAN_ROULETTE_DEFAULT_MAX_NUM_SHOTS: usize = 10;
 
+const REACTION_DEFAULT_NUM_SHOTS_LOSER: usize = 5;
+const REACTION_DEFAULT_NUM_SHOTS_EARLY_START: usize = 10;
+
 #[derive(Debug)]
 pub struct Configuration {
     pub num_players: usize,
@@ -26,6 +29,8 @@ pub struct Configuration {
     pub russian_roulette_loss_probability: f32,
     pub russian_roulette_min_num_shots: usize,
     pub russian_roulette_max_num_shots: usize,
+    pub reaction_num_shots_loser: usize,
+    pub reaction_num_shots_early_start: usize,
 }
 
 impl Default for Configuration {
@@ -36,26 +41,32 @@ impl Default for Configuration {
             russian_roulette_loss_probability: RUSSIAN_ROULETTE_DEFAULT_LOSS_PROBABILITY,
             russian_roulette_min_num_shots: RUSSIAN_ROULETTE_DEFAULT_MIN_NUM_SHOTS,
             russian_roulette_max_num_shots: RUSSIAN_ROULETTE_DEFAULT_MAX_NUM_SHOTS,
+            reaction_num_shots_loser: REACTION_DEFAULT_NUM_SHOTS_LOSER,
+            reaction_num_shots_early_start: REACTION_DEFAULT_NUM_SHOTS_EARLY_START,
         }
     }
 }
 
 enum Variable {
-    NumberOfPlayers,
+    ReactionNumberOfPlayers,
     DelayPerShot,
     RussianRouletteLossProbability,
     RussianRouletteMinNumberOfShots,
     RussianRouletteMaxNumberOfShots,
+    ReactionNumShotsLoser,
+    ReactionNumShotsEarlyStart,
 }
 
 impl Variable {
     fn acceptable_range(&self) -> RangeInclusive<usize> {
         match self {
-            Variable::NumberOfPlayers => 1..=9,
+            Variable::ReactionNumberOfPlayers => 1..=9,
             Variable::DelayPerShot => 100..=2000,
             Variable::RussianRouletteLossProbability => 0..=100,
             Variable::RussianRouletteMinNumberOfShots => 1..=80,
             Variable::RussianRouletteMaxNumberOfShots => 1..=80,
+            Variable::ReactionNumShotsLoser => 1..=80,
+            Variable::ReactionNumShotsEarlyStart => 1..=80,
         }
     }
 }
@@ -70,7 +81,7 @@ impl ConfigurationProgram {
     fn configure(&self, machine: &mut Machine, selected_variable: &Variable, num: usize) {
         let config = machine.get_config_mut();
         match selected_variable {
-            Variable::NumberOfPlayers => {
+            Variable::ReactionNumberOfPlayers => {
                 config.num_players = num;
             }
             Variable::DelayPerShot => {
@@ -85,8 +96,13 @@ impl ConfigurationProgram {
             Variable::RussianRouletteMaxNumberOfShots => {
                 config.russian_roulette_max_num_shots = num;
             }
+            Variable::ReactionNumShotsLoser => {
+                config.reaction_num_shots_loser = num;
+            }
+            Variable::ReactionNumShotsEarlyStart => {
+                config.reaction_num_shots_early_start = num;
+            }
         }
-        dbg!(&config);
     }
 
     fn wait_for_setting(&mut self, machine: &mut Machine, state: &State) {
@@ -135,7 +151,9 @@ impl ConfigurationProgram {
                 2 => Some(Variable::RussianRouletteLossProbability),
                 3 => Some(Variable::RussianRouletteMinNumberOfShots),
                 4 => Some(Variable::RussianRouletteMaxNumberOfShots),
-                5 => Some(Variable::NumberOfPlayers),
+                5 => Some(Variable::ReactionNumberOfPlayers),
+                6 => Some(Variable::ReactionNumShotsLoser),
+                7 => Some(Variable::ReactionNumShotsEarlyStart),
                 _ => None,
             };
             if self.selected_variable.is_some() {
