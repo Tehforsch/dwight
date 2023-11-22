@@ -10,10 +10,10 @@ use crate::hardware_interface::RelayState;
 use crate::hardware_interface::State;
 use crate::hardware_interface::Switch;
 use crate::melody::Melody;
+use crate::melody::BARBIE_GIRL;
 use crate::melody::BEETHOVEN_5;
 use crate::melody::BEETHOVEN_9;
 use crate::melody::CONFIRM_SELECTION;
-use crate::melody::DUCKS;
 use crate::melody::ERROR;
 use crate::melody::IN_PARIS;
 use crate::melody::JINGLE;
@@ -220,7 +220,7 @@ fn program_num(switch: Switch, machine: &Machine) -> Option<(&'static Melody, Bo
         Switch::Number1 => Some((BEETHOVEN_5, Box::new(ContinuousPouring))),
         Switch::Number2 => Some((BEETHOVEN_9, Box::new(SimplePouring))),
         Switch::Number3 => Some((IN_PARIS, Box::new(RussianRoulette::new(machine)))),
-        Switch::Number4 => Some((DUCKS, Box::new(ReactionTester::new(machine)))),
+        Switch::Number4 => Some((BARBIE_GIRL, Box::new(ReactionTester::new(machine)))),
         Switch::Number8 => Some((IN_PARIS, Box::new(LedTest))),
         Switch::Number9 => Some((JINGLE, Box::new(ConfigurationProgram))),
         _ => None,

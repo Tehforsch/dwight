@@ -8,6 +8,8 @@ use crate::hardware_interface::Led;
 use crate::hardware_interface::State;
 use crate::hardware_interface::Switch;
 use crate::machine::Machine;
+use crate::melody::REACTION_TESTER_EARLY_START_MELODY;
+use crate::melody::REACTION_TESTER_GAME_BEGINS_MELODY;
 use crate::melody::REACTION_TESTER_TEAM_WON_MELODY;
 use crate::melody::REACTION_TESTER_WAIT_FOR_REACTION_MELODY;
 use crate::programs::Program;
@@ -15,7 +17,7 @@ use crate::Duration;
 use crate::Time;
 
 const MIN_REACTION_DURATION_MS: u32 = 2000;
-const MAX_REACTION_DURATION_MS: u32 = 20000;
+const MAX_REACTION_DURATION_MS: u32 = 10000;
 
 const NUM_SHOTS_SLOW_REACTION: usize = 5;
 const NUM_SHOTS_EARLY_START: usize = 10;
@@ -23,6 +25,7 @@ const NUM_SHOTS_EARLY_START: usize = 10;
 const LED_ON_DURATION: Duration = 200;
 const LED_FLASH_DURATION: Duration = 500;
 
+#[derive(Debug)]
 struct TeamState {
     players_pressed: Vec<bool>,
 }
@@ -45,30 +48,33 @@ enum Reason {
 }
 
 enum GameState {
-    WaitForStart(Time),
+    WaitForStart,
+    WaitForTiming(Time),
     WaitForAllButtonPresses(TeamState, TeamState),
     WaitForGlass { reason: Reason, team: Team },
 }
 
+#[derive(Debug)]
 enum Team {
     Left,
     Right,
 }
 
-struct ReactionTesterPlayer {
+#[derive(Debug)]
+struct Player {
     button_num: usize,
 }
 
-const PLAYERS_LEFT_SIDE: &[ReactionTesterPlayer] = &[
-    ReactionTesterPlayer { button_num: 1 },
-    ReactionTesterPlayer { button_num: 4 },
-    ReactionTesterPlayer { button_num: 7 },
+const PLAYERS_LEFT_SIDE: &[Player] = &[
+    Player { button_num: 1 },
+    Player { button_num: 4 },
+    Player { button_num: 7 },
 ];
 
-const PLAYERS_RIGHT_SIDE: &[ReactionTesterPlayer] = &[
-    ReactionTesterPlayer { button_num: 3 },
-    ReactionTesterPlayer { button_num: 6 },
-    ReactionTesterPlayer { button_num: 9 },
+const PLAYERS_RIGHT_SIDE: &[Player] = &[
+    Player { button_num: 3 },
+    Player { button_num: 6 },
+    Player { button_num: 9 },
 ];
 
 pub struct ReactionTester {
@@ -80,18 +86,27 @@ pub struct ReactionTester {
 fn get_wait_for_start_state_with_random_timing(machine: &Machine, rng: &mut SmallRng) -> GameState {
     let time = machine.time_ms();
     let duration = rng.gen_range(MIN_REACTION_DURATION_MS..MAX_REACTION_DURATION_MS);
-    GameState::WaitForStart(time + duration)
+    GameState::WaitForTiming(time + duration)
 }
 
 impl ReactionTester {
     pub fn new(machine: &Machine) -> Self {
-        let mut rng = SmallRng::seed_from_u64(machine.time_ms() as u64);
-        let state = get_wait_for_start_state_with_random_timing(machine, &mut rng);
         Self {
             num_players: machine.config().num_players,
-            rng,
-            state,
+            rng: SmallRng::seed_from_u64(machine.time_ms() as u64),
+            state: GameState::WaitForStart,
         }
+    }
+
+    fn iter_active_players(&self) -> impl Iterator<Item = (&'static Player, Team)> {
+        PLAYERS_LEFT_SIDE[..self.num_players_left()]
+            .iter()
+            .map(|player| (player, Team::Left))
+            .chain(
+                PLAYERS_RIGHT_SIDE[..self.num_players_right()]
+                    .iter()
+                    .map(|player| (player, Team::Right)),
+            )
     }
 
     fn wait_for_start(
@@ -101,18 +116,9 @@ impl ReactionTester {
         timing: Time,
     ) -> Option<GameState> {
         let current_time = machine.time_ms();
-        let num_players_left = self.num_players / 2;
-        let num_players_right = self.num_players - num_players_left;
-        for (player, team) in PLAYERS_LEFT_SIDE
-            .iter()
-            .map(|player| (player, Team::Left))
-            .chain(
-                PLAYERS_RIGHT_SIDE
-                    .iter()
-                    .map(|player| (player, Team::Right)),
-            )
-        {
+        for (player, team) in self.iter_active_players() {
             if state.pressed(Switch::number(player.button_num)) {
+                machine.play_melody(REACTION_TESTER_EARLY_START_MELODY);
                 return Some(GameState::WaitForGlass {
                     team,
                     reason: Reason::EarlyStart,
@@ -122,8 +128,8 @@ impl ReactionTester {
         if current_time > timing {
             machine.play_melody(REACTION_TESTER_WAIT_FOR_REACTION_MELODY);
             Some(GameState::WaitForAllButtonPresses(
-                TeamState::new(num_players_left),
-                TeamState::new(num_players_right),
+                TeamState::new(self.num_players_left()),
+                TeamState::new(self.num_players_right()),
             ))
         } else {
             None
@@ -149,8 +155,19 @@ impl ReactionTester {
             let num_shots = num_shots;
             machine.pour_with_melody(num_shots);
             machine.wait_for_all_actions();
-            self.state = get_wait_for_start_state_with_random_timing(machine, &mut self.rng);
+            self.state = GameState::WaitForStart;
         }
+    }
+
+    fn num_players_left(&self) -> usize {
+        let num_players_left = self.num_players / 2;
+        num_players_left
+    }
+
+    fn num_players_right(&self) -> usize {
+        let num_players_left = self.num_players_left();
+        let num_players_right = self.num_players - num_players_left;
+        num_players_right
     }
 }
 
@@ -181,12 +198,15 @@ fn wait_for_button_presses(
 
 fn update_and_get_victory_state(
     state: &State,
-    players: &[ReactionTesterPlayer],
+    players: &[Player],
     team_state: &mut TeamState,
 ) -> bool {
     for (i, player) in players.iter().enumerate() {
         if state.pressed(Switch::number(player.button_num)) {
-            team_state.players_pressed[i] = true;
+            // Make sure we dont panic if somebody presses an out of bounds button
+            if let Some(player_state) = team_state.players_pressed.get_mut(i) {
+                *player_state = true;
+            }
         }
     }
     team_state.won()
@@ -195,7 +215,18 @@ fn update_and_get_victory_state(
 impl Program for ReactionTester {
     fn update(&mut self, machine: &mut Machine, state: &State) {
         match self.state {
-            GameState::WaitForStart(time) => {
+            GameState::WaitForStart => {
+                if self
+                    .iter_active_players()
+                    .all(|(player, _)| state.pressed(Switch::number(player.button_num)))
+                {
+                    self.state =
+                        get_wait_for_start_state_with_random_timing(machine, &mut self.rng);
+                    machine.play_melody(REACTION_TESTER_GAME_BEGINS_MELODY);
+                    machine.wait_for_all_actions();
+                }
+            }
+            GameState::WaitForTiming(time) => {
                 if let Some(new_state) = self.wait_for_start(machine, state, time) {
                     self.state = new_state;
                     machine.wait_for_all_actions();

@@ -126,25 +126,47 @@ make_melody!(
     ]
 );
 
-// Barbie girl
 #[rustfmt::skip]
 make_melody!(
     REACTION_TESTER_TEAM_WON_MELODY,
-    140.0,
+    200.0,
     [
-        (G4, 8),
-        (E4, 8),
-        (G4, 8),
-        (C5, 8),
-        (A4, 2),
-
-        (F4, 8),
+        (C4, 8),
         (D4, 8),
-        (F4, 8),
-        (B4, 8),
-        (G4, 4),
-        (F4, 8),
         (E4, 8),
+        (F4, 8),
+        (G4, 4),
+        (G4, 4),
+    ]
+);
+
+#[rustfmt::skip]
+make_melody!(
+    REACTION_TESTER_EARLY_START_MELODY,
+    300.0,
+    [
+        (C_SHARP_4, 8),
+        (G4, 8),
+        (C_SHARP_4, 8),
+        (G4, 8),
+        (C_SHARP_4, 8),
+        (G4, 8),
+        (C_SHARP_4, 8),
+        (G4, 8),
+        (C_SHARP_4, 8),
+        (G4, 8),
+    ]
+);
+
+#[rustfmt::skip]
+make_melody!(
+    REACTION_TESTER_GAME_BEGINS_MELODY,
+    200.0,
+    [
+        (C4, 4),
+        (C4, 4),
+        (C4, 4),
+        (C4, 4),
     ]
 );
 
@@ -170,15 +192,22 @@ make_melody!(
 
 #[rustfmt::skip]
 make_melody!(
-    DUCKS,
-    200.0,
+    BARBIE_GIRL,
+    240.0,
     [
-        (C4, 8),
-        (D4, 8),
+        (G4, 8),
         (E4, 8),
+        (G4, 8),
+        (C5, 8),
+        (A4, 2),
+
         (F4, 8),
+        (D4, 8),
+        (F4, 8),
+        (B4, 8),
         (G4, 4),
-        (G4, 4),
+        (F4, 8),
+        (E4, 8),
     ]
 );
 

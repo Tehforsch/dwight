@@ -71,9 +71,7 @@ impl HardwareInterface for TestDwight {
         }
     }
 
-    fn set_led_state(&mut self, led: Led, led_state: LedState) {
-        dbg!(led, led_state);
-    }
+    fn set_led_state(&mut self, _led: Led, _led_state: LedState) {}
 
     fn set_relay_state(&mut self, relay_state: RelayState) {
         dbg!(relay_state);
