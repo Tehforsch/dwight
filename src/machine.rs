@@ -12,11 +12,13 @@ use programs::Program;
 
 use crate::hardware_interface;
 use crate::melody;
+use crate::melody::Note;
 use crate::programs;
 use crate::Duration;
 use crate::Time;
 
-pub const NUM_MS_PER_SHOT: Time = 100;
+pub const NUM_MS_PER_SHOT: Time = 700;
+pub const DELAY_AFTER_SHOT: Time = 300;
 const DEFAULT_NUM_PLAYERS: usize = 2;
 
 pub struct Configuration {
@@ -99,10 +101,6 @@ impl StartedTransition {
     fn end_time(&self) -> Time {
         self.transition.duration + self.start_time_ms
     }
-}
-
-fn get_relay_timing_ms(num: usize) -> u32 {
-    (num as u32) * NUM_MS_PER_SHOT
 }
 
 pub struct Machine {
@@ -193,18 +191,22 @@ impl Machine {
         }
     }
 
-    pub fn pour(&mut self, num: usize) {
-        self.queue_action(0, Action::SetRelayState(RelayState::On));
+    pub fn pour(&mut self, offset: Duration) {
+        self.queue_action(offset, Action::SetRelayState(RelayState::On));
         self.queue_action(
-            get_relay_timing_ms(num),
+            offset + NUM_MS_PER_SHOT,
             Action::SetRelayState(RelayState::Off),
         );
     }
 
     pub fn pour_with_melody(&mut self, num: usize) {
-        self.pour(num);
-        let num_notes_to_play = num.min(CHROMATIC_SCALE.len());
-        self.play_melody(&CHROMATIC_SCALE[..num_notes_to_play]);
+        let duration_per_shot = NUM_MS_PER_SHOT + DELAY_AFTER_SHOT;
+        for i in 0..num {
+            let note = i.min(CHROMATIC_SCALE.len());
+            let offset = duration_per_shot * i as u32;
+            self.pour(offset);
+            self.queue_note(&CHROMATIC_SCALE[note], offset);
+        }
     }
 
     pub fn flash_led(&mut self, led: Led, transition_duration: Duration, on_duration: Duration) {
@@ -221,13 +223,17 @@ impl Machine {
     pub fn play_melody(&mut self, melody: &Melody) {
         let mut offset = 0;
         for note in melody.iter() {
-            self.queue_action(offset, Action::SetSpeakerFrequency(note.freq.clone()));
-            self.queue_action(
-                offset + note.note_length,
-                Action::SetSpeakerFrequency(Frequency::Silence),
-            );
+            self.queue_note(note, offset);
             offset += note.total_length();
         }
+    }
+
+    fn queue_note(&mut self, note: &Note, offset: Duration) {
+        self.queue_action(offset, Action::SetSpeakerFrequency(note.freq.clone()));
+        self.queue_action(
+            offset + note.note_length,
+            Action::SetSpeakerFrequency(Frequency::Silence),
+        );
     }
 
     pub fn wait_for_all_actions(&mut self) {
