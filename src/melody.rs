@@ -126,6 +126,28 @@ make_melody!(
     ]
 );
 
+// Barbie girl
+#[rustfmt::skip]
+make_melody!(
+    REACTION_TESTER_TEAM_WON_MELODY,
+    140.0,
+    [
+        (G4, 8),
+        (E4, 8),
+        (G4, 8),
+        (C5, 8),
+        (A4, 2),
+
+        (F4, 8),
+        (D4, 8),
+        (F4, 8),
+        (B4, 8),
+        (G4, 4),
+        (F4, 8),
+        (E4, 8),
+    ]
+);
+
 #[rustfmt::skip]
 make_melody!(
     IN_PARIS,

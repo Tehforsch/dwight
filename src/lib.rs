@@ -10,6 +10,7 @@ pub mod hardware_interface;
 mod machine;
 mod melody;
 mod programs;
+mod reaction_tester;
 
 pub type Time = u32;
 pub type Duration = u32;
