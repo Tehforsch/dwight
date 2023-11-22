@@ -126,6 +126,10 @@ impl RussianRoulette {
     }
 
     fn wait_for_glass(&mut self, machine: &mut Machine, state: &State) {
+        if machine.no_ongoing_led_transition() {
+            machine.flash_led(Led::Left, 1000, 1000);
+            machine.flash_led(Led::Right, 1000, 1000);
+        }
         if state.anything_just_pressed() {
             let num_shots = self.get_random_num_shots(); // todo randomize
             machine.pour_with_melody(num_shots);
@@ -147,17 +151,6 @@ impl Program for ConfigurationProgram {
                 machine.wait_for_all_actions();
                 machine.configure_num_players(num);
             }
-        }
-    }
-}
-
-struct LedTest;
-
-impl Program for LedTest {
-    fn update(&mut self, machine: &mut Machine, _: &State) {
-        if machine.no_ongoing_led_transition() {
-            machine.flash_led(Led::Left, 2000, 5000);
-            machine.flash_led(Led::Right, 2000, 5000);
         }
     }
 }
@@ -221,7 +214,6 @@ fn program_num(switch: Switch, machine: &Machine) -> Option<(&'static Melody, Bo
         Switch::Number2 => Some((BEETHOVEN_9, Box::new(SimplePouring))),
         Switch::Number3 => Some((IN_PARIS, Box::new(RussianRoulette::new(machine)))),
         Switch::Number4 => Some((BARBIE_GIRL, Box::new(ReactionTester::new(machine)))),
-        Switch::Number8 => Some((IN_PARIS, Box::new(LedTest))),
         Switch::Number9 => Some((JINGLE, Box::new(ConfigurationProgram))),
         _ => None,
     }
