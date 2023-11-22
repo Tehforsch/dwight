@@ -81,7 +81,7 @@ macro_rules! make_melody {
 #[rustfmt::skip]
 make_melody!(
     BEETHOVEN_9,
-    200.0,
+    250.0,
     [
         (E4, 8),
         (E4, 8),
@@ -104,7 +104,7 @@ make_melody!(
 #[rustfmt::skip]
 make_melody!(
     BEETHOVEN_5,
-    140.0,
+    200.0,
     [
         (F4, 16),
         (F4, 16),
@@ -151,7 +151,7 @@ make_melody!(
 #[rustfmt::skip]
 make_melody!(
     IN_PARIS,
-    140.0,
+    180.0,
     [
         (F4, 16),
         (C4, 16),
