@@ -10,20 +10,25 @@ use crate::hardware_interface::Switch;
 use crate::machine::Machine;
 use crate::melody::REACTION_TESTER_EARLY_START_MELODY;
 use crate::melody::REACTION_TESTER_GAME_BEGINS_MELODY;
+use crate::melody::REACTION_TESTER_PLAYER_0_MELODY_IDENTIFICATION_MELODY;
+use crate::melody::REACTION_TESTER_PLAYER_1_MELODY_IDENTIFICATION_MELODY;
+use crate::melody::REACTION_TESTER_PLAYER_2_MELODY_IDENTIFICATION_MELODY;
 use crate::melody::REACTION_TESTER_TEAM_WON_MELODY;
 use crate::melody::REACTION_TESTER_WAIT_FOR_REACTION_MELODY;
 use crate::programs::Program;
 use crate::Duration;
 use crate::Time;
 
-const MIN_REACTION_DURATION_MS: u32 = 2000;
-const MAX_REACTION_DURATION_MS: u32 = 10000;
+const MIN_REACTION_DURATION_MS: u32 = 5000;
+const MAX_REACTION_DURATION_MS: u32 = 15000;
 
 const NUM_SHOTS_SLOW_REACTION: usize = 5;
 const NUM_SHOTS_EARLY_START: usize = 10;
 
 const LED_ON_DURATION: Duration = 200;
 const LED_FLASH_DURATION: Duration = 500;
+
+const MAX_NUM_PLAYERS: usize = 6;
 
 #[derive(Debug)]
 struct TeamState {
@@ -44,7 +49,7 @@ impl TeamState {
 
 enum Reason {
     SlowReaction,
-    EarlyStart,
+    EarlyStart(usize),
 }
 
 enum GameState {
@@ -63,18 +68,37 @@ enum Team {
 #[derive(Debug)]
 struct Player {
     button_num: usize,
+    index: usize,
 }
 
 const PLAYERS_LEFT_SIDE: &[Player] = &[
-    Player { button_num: 1 },
-    Player { button_num: 4 },
-    Player { button_num: 7 },
+    Player {
+        button_num: 1,
+        index: 0,
+    },
+    Player {
+        button_num: 4,
+        index: 1,
+    },
+    Player {
+        button_num: 7,
+        index: 2,
+    },
 ];
 
 const PLAYERS_RIGHT_SIDE: &[Player] = &[
-    Player { button_num: 3 },
-    Player { button_num: 6 },
-    Player { button_num: 9 },
+    Player {
+        button_num: 3,
+        index: 0,
+    },
+    Player {
+        button_num: 6,
+        index: 1,
+    },
+    Player {
+        button_num: 9,
+        index: 2,
+    },
 ];
 
 pub struct ReactionTester {
@@ -91,8 +115,9 @@ fn get_wait_for_start_state_with_random_timing(machine: &Machine, rng: &mut Smal
 
 impl ReactionTester {
     pub fn new(machine: &Machine) -> Self {
+        let num_players = machine.config().num_players.min(MAX_NUM_PLAYERS);
         Self {
-            num_players: machine.config().num_players,
+            num_players,
             rng: SmallRng::seed_from_u64(machine.time_ms() as u64),
             state: GameState::WaitForStart,
         }
@@ -121,7 +146,7 @@ impl ReactionTester {
                 machine.play_melody(REACTION_TESTER_EARLY_START_MELODY);
                 return Some(GameState::WaitForGlass {
                     team,
-                    reason: Reason::EarlyStart,
+                    reason: Reason::EarlyStart(player.index),
                 });
             }
         }
@@ -142,7 +167,7 @@ impl ReactionTester {
         };
         let num_shots = match reason {
             Reason::SlowReaction => NUM_SHOTS_SLOW_REACTION,
-            Reason::EarlyStart => NUM_SHOTS_EARLY_START,
+            Reason::EarlyStart(_) => NUM_SHOTS_EARLY_START,
         };
         let led = match team {
             Team::Left => Led::Left,
@@ -150,6 +175,16 @@ impl ReactionTester {
         };
         if machine.no_ongoing_led_transition() {
             machine.flash_led(led, LED_FLASH_DURATION, LED_ON_DURATION);
+        }
+        if machine.no_sound_queued() {
+            if let Reason::EarlyStart(player) = reason {
+                match player {
+                    0 => machine.play_melody(REACTION_TESTER_PLAYER_0_MELODY_IDENTIFICATION_MELODY),
+                    1 => machine.play_melody(REACTION_TESTER_PLAYER_1_MELODY_IDENTIFICATION_MELODY),
+                    2 => machine.play_melody(REACTION_TESTER_PLAYER_2_MELODY_IDENTIFICATION_MELODY),
+                    _ => unreachable!(),
+                }
+            }
         }
         if state.anything_just_pressed() {
             let num_shots = num_shots;

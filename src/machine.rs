@@ -253,6 +253,13 @@ impl Machine {
             && self.time_ms > self.right_led_transition.end_time()
     }
 
+    pub fn no_sound_queued(&self) -> bool {
+        !self
+            .actions
+            .iter()
+            .any(|action| matches!(action.action, Action::SetSpeakerFrequency(_)))
+    }
+
     pub fn configure_num_players(&mut self, num: usize) {
         self.config.num_players = num;
     }

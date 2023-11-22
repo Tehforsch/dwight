@@ -172,6 +172,39 @@ make_melody!(
 
 #[rustfmt::skip]
 make_melody!(
+    REACTION_TESTER_PLAYER_0_MELODY_IDENTIFICATION_MELODY,
+    300.0,
+    [
+        (D4, 16),
+        (BREAK, 2),
+    ]
+);
+
+#[rustfmt::skip]
+make_melody!(
+    REACTION_TESTER_PLAYER_1_MELODY_IDENTIFICATION_MELODY,
+    300.0,
+    [
+        (D4, 16),
+        (D4, 16),
+        (BREAK, 2),
+    ]
+);
+
+#[rustfmt::skip]
+make_melody!(
+    REACTION_TESTER_PLAYER_2_MELODY_IDENTIFICATION_MELODY,
+    300.0,
+    [
+        (D4, 16),
+        (D4, 16),
+        (D4, 16),
+        (BREAK, 2),
+    ]
+);
+
+#[rustfmt::skip]
+make_melody!(
     IN_PARIS,
     180.0,
     [
